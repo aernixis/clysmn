@@ -183,9 +183,30 @@
     .remove-whitelist { background: rgba(204, 136, 136, 0.2); border: none; color: #cc8888; padding: 4px 12px; border-radius: 8px; cursor: pointer; }
     @media (max-width: 680px) { .bookmarks-grid { justify-content: center; } .library-wrapper { padding: 20px 16px; } .settings-container { padding: 20px 16px; } }
     .click-hint { position: absolute; bottom: 16px; right: 20px; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); padding: 6px 12px; border-radius: 40px; font-size: 11px; color: #aaa; pointer-events: none; z-index: 50; font-weight: 500; }
+    .access-denied {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      text-align: center;
+      padding: 20px;
+      background: var(--bg-main);
+      color: var(--text-primary);
+    }
+    .access-denied h1 { font-size: 32px; margin-bottom: 16px; color: #cc8888; }
+    .access-denied p { font-size: 16px; color: var(--text-secondary); margin-bottom: 24px; }
+    .access-denied .email-display { background: var(--bg-card); padding: 12px 24px; border-radius: 12px; font-family: monospace; margin: 16px 0; }
   </style>
 </head>
 <body>
+<div id="accessDenied" class="access-denied" style="display: none;">
+  <h1>Access Denied</h1>
+  <p>Your email is not authorized to use this application.</p>
+  <div id="userEmailDisplay" class="email-display"></div>
+  <p style="font-size: 14px;">Please contact an administrator to request access.</p>
+</div>
+
 <div class="layout" id="mainLayout" style="display: none;">
   <aside class="sidebar">
     <div class="sidebar-top">
@@ -212,32 +233,102 @@
 <div class="modal-overlay" id="bookmarkModal"><div class="modal"><h3 id="modalTitle">Add Bookmark</h3><input type="text" class="modal-input" id="bookmarkName" placeholder="Name" autocomplete="off" /><input type="text" class="modal-input" id="bookmarkUrl" placeholder="URL" autocomplete="off" /><div id="urlError" class="error-message" style="display:none;">Please enter a valid URL</div><div class="modal-buttons"><button class="modal-btn secondary" onclick="closeBookmarkModal()">Cancel</button><button class="modal-btn primary" onclick="saveBookmarkWithValidation()">Save</button></div></div></div>
 
 <script>
-  // ==================== AUTOMATIC AUTHENTICATION ====================
-  // No email prompt - automatically grant access with default whitelist
-  let currentUser = "auto_user";
-  let isAdmin = true; // Auto-grant admin for full access
-  let whitelist = [];
-  
-  // Admin emails list for reference
+  // ==================== ADMIN EMAILS & WHITELIST ====================
   const ADMIN_EMAILS = ['fhuang@princetonk12.org', 'aernatas@gmail.com', 'aernixis@gmail.com'];
+  let currentUser = null;
+  let isAdmin = false;
+  let whitelist = [...ADMIN_EMAILS];
   
-  // Load saved whitelist from localStorage if exists
+  // Load saved whitelist from localStorage
   try {
     const saved = localStorage.getItem('whitelist');
     if (saved) {
       const parsed = JSON.parse(saved);
       whitelist = [...new Set([...ADMIN_EMAILS, ...parsed])];
-    } else {
-      whitelist = [...ADMIN_EMAILS];
     }
-  } catch(e) {
-    whitelist = [...ADMIN_EMAILS];
+  } catch(e) {}
+  
+  // ==================== DETECT USER EMAIL AUTOMATICALLY ====================
+  // Try multiple methods to detect the user's email without prompting
+  async function detectUserEmail() {
+    // Method 1: Check localStorage for previously authenticated email
+    const savedEmail = localStorage.getItem('authenticatedEmail');
+    if (savedEmail && whitelist.includes(savedEmail.toLowerCase())) {
+      return savedEmail.toLowerCase();
+    }
+    
+    // Method 2: Try to get from Google Accounts (if logged into Google)
+    // This works in some contexts but may be blocked by CORS
+    try {
+      const googleResponse = await fetch('https://accounts.google.com/.well-known/openid-configuration', { mode: 'no-cors' });
+      // This won't give email directly, but we can check if user is logged into Google
+    } catch(e) {}
+    
+    // Method 3: Check for common email patterns in cookies or storage
+    const possibleEmailKeys = ['user_email', 'email', 'userEmail', 'profile_email', 'account_email'];
+    for (let key of possibleEmailKeys) {
+      const stored = localStorage.getItem(key) || sessionStorage.getItem(key);
+      if (stored && stored.includes('@') && whitelist.includes(stored.toLowerCase())) {
+        return stored.toLowerCase();
+      }
+    }
+    
+    // Method 4: For school/district environments, check if there's a session cookie or stored profile
+    // This is a fallback - in a real environment, you'd have SSO integration
+    // For demo purposes, we'll check if any whitelisted email appears in storage
+    
+    // Method 5: Check for email in IndexedDB (common in PWA apps)
+    // Not implemented for simplicity
+    
+    // If no email detected, return null - access will be denied
+    return null;
   }
   
-  // Auto-initialize without any prompt
-  function autoAuth() {
-    // No prompt, just initialize
-    initializeApp();
+  // ==================== AUTHENTICATION CHECK ====================
+  async function checkAuth() {
+    const detectedEmail = await detectUserEmail();
+    
+    if (detectedEmail && whitelist.includes(detectedEmail)) {
+      currentUser = detectedEmail;
+      isAdmin = ADMIN_EMAILS.includes(currentUser);
+      // Save for future sessions
+      localStorage.setItem('authenticatedEmail', currentUser);
+      initializeApp();
+    } else if (detectedEmail) {
+      // Email detected but not on whitelist
+      showAccessDenied(detectedEmail);
+    } else {
+      // No email detected - try one more method: check if there's a way to get from browser
+      // Some browsers expose user email via navigator.credentials or similar
+      if (navigator.credentials && navigator.credentials.get) {
+        try {
+          const credential = await navigator.credentials.get({ password: true, federated: { providers: ['https://accounts.google.com'] } });
+          if (credential && credential.id && whitelist.includes(credential.id.toLowerCase())) {
+            currentUser = credential.id.toLowerCase();
+            isAdmin = ADMIN_EMAILS.includes(currentUser);
+            localStorage.setItem('authenticatedEmail', currentUser);
+            initializeApp();
+            return;
+          }
+        } catch(e) {}
+      }
+      showAccessDenied(null);
+    }
+  }
+  
+  function showAccessDenied(email) {
+    const deniedDiv = document.getElementById('accessDenied');
+    const emailDisplay = document.getElementById('userEmailDisplay');
+    const layout = document.getElementById('mainLayout');
+    
+    if (email) {
+      emailDisplay.textContent = `Detected email: ${email}`;
+    } else {
+      emailDisplay.textContent = 'No email detected. Please ensure you are logged into your account.';
+    }
+    
+    deniedDiv.style.display = 'flex';
+    layout.style.display = 'none';
   }
   
   const SEARCH_URL = "https://swisscows.com/en/web?query={query}";
@@ -415,6 +506,10 @@
         <h2>Whitelist Management</h2>
         <div class="setting-field"><label>Add Email to Whitelist:</label><input type="email" id="newWhitelistEmail" placeholder="email@example.com" onkeypress="if(event.key==='Enter'){addToWhitelist();}" /></div>
         <div class="setting-field"><label>Current Whitelisted Emails:</label><div id="whitelistContainer"></div></div>
+        <div class="setting-field" style="margin-top: 12px;">
+          <label>Your Current Email:</label>
+          <input type="text" value="${currentUser || 'Not detected'}" readonly style="background:#111; opacity:0.8;" />
+        </div>
       </div>`;
     container.innerHTML = html;
     renderWhitelist();
@@ -463,8 +558,8 @@
   function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;'); }
   function initializeApp() { loadSettings(); renderSettingsUI(); renderBookmarksGrid(); setupSwisscowsLinkInterceptor(); document.getElementById('mainLayout').style.display = 'flex'; }
   
-  // Auto-start without any email prompt
-  autoAuth();
+  // Start authentication check automatically without prompts
+  checkAuth();
   
   window.switchTab = switchTab; window.closeBookmarkModal = closeBookmarkModal; window.saveBookmarkWithValidation = saveBookmarkWithValidation; window.saveFaviconSettings = saveFaviconSettings; window.savePanicUrl = savePanicUrl; window.addToWhitelist = addToWhitelist; window.removeFromWhitelist = removeFromWhitelist; window.startKeyRecording = startKeyRecording; window.triggerPanic = triggerPanic; window.launchCurrentTabInBlank = launchCurrentTabInBlank;
 </script>
