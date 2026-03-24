@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>App UI — Trapezoidal Notch</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg-sidebar: #0d0d0d;
+      --bg-main: #111111;
+      --bg-card: #1a1a1a;
+      --icon-default: #5a5a5a;
+      --icon-active: #9a9a9a;
+      --icon-hover: #c0c0c0;
+      --divider: #2a2a2a;
+      --sidebar-width: 58px;
+      --search-bg: rgba(26, 26, 26, 0.96);
+      --search-border: #333333;
+      --search-focus: #9a9a9a;
+      --text-primary: #f0f0f0;
+      --text-secondary: #888888;
+      --shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      --bookmark-bg: rgba(100, 100, 100, 0.12);
+      --error-color: #cc8888;
+      --settings-bg: #1a1a1a;
+      --input-bg: #111111;
+      --border-color: #2c2c2c;
+      --accent-glow: #2c6e9e;
+    }
+    html, body { height: 100%; font-family: 'DM Sans', sans-serif; background: var(--bg-main); overflow: hidden; }
+    .layout { display: flex; height: 100vh; }
+    .sidebar {
+      width: var(--sidebar-width);
+      background: var(--bg-sidebar);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 18px 0;
+      border-right: 1px solid var(--divider);
+      flex-shrink: 0;
+      z-index: 10;
+    }
+    .sidebar-top, .sidebar-bottom { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+    .sidebar-top { flex: 1; }
+    .icon-btn {
+      position: relative;
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.18s ease, transform 0.15s ease;
+      color: var(--icon-default);
+    }
+    .icon-btn:hover { background: rgba(255,255,255,0.05); color: var(--icon-hover); transform: scale(1.05); }
+    .icon-btn.active { background: rgba(154, 154, 154, 0.12); color: var(--icon-active); }
+    .icon-btn svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.7; }
+    .icon-btn.active::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 4px;
+      height: 22px;
+      background: var(--icon-active);
+      clip-path: polygon(0% 0%, 100% 15%, 100% 85%, 0% 100%);
+    }
+    .main { flex: 1; background: var(--bg-main); position: relative; overflow: hidden; }
+    .tab-content { display: none; height: 100%; overflow-y: auto; }
+    .tab-content.active { display: block; }
+    .library-wrapper { height: 100%; width: 100%; overflow-y: auto; padding: 28px 32px; }
+    .library-header { margin-bottom: 32px; }
+    .library-header h2 { font-size: 24px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px; }
+    .library-header p { color: var(--text-secondary); font-size: 14px; }
+    .bookmarks-grid { display: flex; flex-wrap: wrap; gap: 16px; }
+    .bookmark-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 20px;
+      width: 200px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 12px;
+    }
+    .bookmark-card:hover { transform: translateY(-2px); border-color: var(--icon-active); background: rgba(154, 154, 154, 0.1); }
+    .bookmark-icon { width: 48px; height: 48px; border-radius: 12px; background: #2a2a2a; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+    .bookmark-name { font-weight: 600; color: var(--text-primary); font-size: 14px; word-break: break-word; }
+    .bookmark-url { font-size: 11px; color: var(--text-secondary); word-break: break-all; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .bookmark-actions { display: flex; gap: 8px; margin-top: 8px; }
+    .bookmark-edit-btn, .bookmark-delete-btn { background: rgba(255,255,255,0.05); border: none; border-radius: 8px; padding: 4px 12px; font-size: 11px; cursor: pointer; color: var(--text-secondary); transition: all 0.2s; }
+    .bookmark-edit-btn:hover { background: rgba(154, 154, 154, 0.2); color: var(--text-primary); }
+    .bookmark-delete-btn:hover { background: rgba(204, 136, 136, 0.2); color: #cc8888; }
+    .add-bookmark-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px dashed var(--border-color);
+      border-radius: 20px;
+      padding: 20px;
+      width: 200px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 12px;
+    }
+    .add-bookmark-card:hover { border-color: var(--icon-active); background: rgba(154, 154, 154, 0.1); }
+    .add-icon { width: 48px; height: 48px; border-radius: 12px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; font-size: 32px; color: var(--text-secondary); }
+    .add-text { font-weight: 500; color: var(--text-secondary); }
+    .explore-wrapper { height: 100%; width: 100%; position: relative; }
+    .explore-iframe { width: 100%; height: 100%; border: none; background: #fff; }
+    .iframe-wrapper { position: absolute; top: 0; left: 0; right: 0; bottom: 0; }
+    #embed-frame { width: 100%; height: 100%; border: none; background: #0a0a0a; }
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(5px);
+      display: none; align-items: center; justify-content: center; z-index: 2000;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+      background: #1a1a1a; border: 1px solid #2c2c2c; border-radius: 24px;
+      padding: 28px; width: 90%; max-width: 420px; box-shadow: var(--shadow-lg);
+    }
+    .modal h3 { font-size: 20px; font-weight: 600; margin-bottom: 20px; color: #fff; }
+    .modal-input { width: 100%; padding: 12px 16px; background: #111; border: 1px solid #2c2c2c; border-radius: 14px; color: #fff; font-size: 14px; margin-bottom: 14px; outline: none; }
+    .modal-input:focus { border-color: var(--search-focus); }
+    .error-message { color: #cc8888; font-size: 12px; margin-top: -8px; margin-bottom: 12px; }
+    .modal-buttons { display: flex; gap: 12px; margin-top: 20px; }
+    .modal-btn { flex: 1; padding: 12px; border: none; border-radius: 14px; font-weight: 600; cursor: pointer; }
+    .modal-btn.primary { background: #ffffff; color: #111; }
+    .modal-btn.primary:hover { background: #e0e0e0; }
+    .modal-btn.secondary { background: #2a2a2a; color: #ddd; }
+    .settings-container { max-width: 800px; margin: 0 auto; padding: 40px 32px; }
+    .settings-section { background: var(--settings-bg); border: 1px solid var(--border-color); border-radius: 24px; padding: 28px; margin-bottom: 32px; }
+    .settings-section h2 { font-size: 20px; font-weight: 600; margin-bottom: 24px; color: var(--text-primary); }
+    .favicon-preview { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; padding: 16px; background: var(--input-bg); border-radius: 16px; border: 1px solid var(--border-color); }
+    .favicon-img { width: 48px; height: 48px; border-radius: 12px; background: #2a2a2a; display: flex; align-items: center; justify-content: center; }
+    .favicon-img img { width: 32px; height: 32px; object-fit: contain; }
+    .preview-text { font-weight: 600; color: var(--text-primary); font-size: 18px; }
+    .setting-field { margin-bottom: 20px; }
+    .setting-field label { display: block; margin-bottom: 8px; color: var(--text-secondary); font-size: 13px; font-weight: 500; }
+    .setting-field select, .setting-field input { width: 100%; padding: 12px 16px; background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 12px; color: var(--text-primary); font-size: 14px; outline: none; }
+    .setting-field select:focus, .setting-field input:focus { border-color: var(--search-focus); }
+    .key-record-btn, .launch-blank-btn {
+      background: #2a2a2a;
+      border: 2px solid var(--border-color);
+      padding: 12px 20px;
+      border-radius: 12px;
+      color: var(--text-primary);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      width: 100%;
+      text-align: center;
+      transition: all 0.2s;
+    }
+    .launch-blank-btn {
+      background: #1e3a4d;
+      border-color: #3a6e8c;
+      color: #eef4ff;
+      font-weight: 600;
+    }
+    .launch-blank-btn:hover {
+      background: #2a4d66;
+      transform: translateY(-1px);
+      border-color: #5a8eac;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    .key-record-btn.recording { background: #3a6a3a; border-color: #8a8a8a; animation: pulse 1s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+    .whitelist-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--input-bg); border-radius: 12px; margin-bottom: 8px; color: var(--text-primary); }
+    .remove-whitelist { background: rgba(204, 136, 136, 0.2); border: none; color: #cc8888; padding: 4px 12px; border-radius: 8px; cursor: pointer; }
+    @media (max-width: 680px) { .bookmarks-grid { justify-content: center; } .library-wrapper { padding: 20px 16px; } .settings-container { padding: 20px 16px; } }
+    .click-hint { position: absolute; bottom: 16px; right: 20px; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); padding: 6px 12px; border-radius: 40px; font-size: 11px; color: #aaa; pointer-events: none; z-index: 50; font-weight: 500; }
+  </style>
+</head>
+<body>
+<div class="layout" id="mainLayout" style="display: none;">
+  <aside class="sidebar">
+    <div class="sidebar-top">
+      <button class="icon-btn active" onclick="switchTab('home', this)"><svg viewBox="0 0 24 24"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H5a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg></button>
+      <button class="icon-btn" onclick="switchTab('explore', this)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polygon points="16.24,7.76 14.12,14.12 7.76,16.24 9.88,9.88"/></svg></button>
+      <button class="icon-btn" onclick="switchTab('library', this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></button>
+    </div>
+    <div class="sidebar-bottom">
+      <button class="icon-btn" onclick="switchTab('settings', this)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></button>
+    </div>
+  </aside>
+  <main class="main">
+    <div class="tab-content active" id="homeTab"><div class="iframe-wrapper"><iframe id="embed-frame" src="https://xprime.su/" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-top-navigation allow-top-navigation-by-user-activation allow-downloads" referrerpolicy="no-referrer"></iframe></div></div>
+    <div class="tab-content" id="exploreTab">
+      <div class="explore-wrapper">
+        <iframe id="swisscowsIframe" class="explore-iframe" src="https://swisscows.com/en" sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals allow-top-navigation-by-user-activation" referrerpolicy="no-referrer"></iframe>
+        <div class="click-hint">⚡ click any link → opens in about:blank tab</div>
+      </div>
+    </div>
+    <div class="tab-content" id="libraryTab"><div class="library-wrapper"><div class="library-header"><h2>Library</h2><p>Your saved bookmarks</p></div><div class="bookmarks-grid" id="bookmarksGrid"></div></div></div>
+    <div class="tab-content" id="settingsTab"><div class="settings-container" id="settingsContainer"></div></div>
+  </main>
+</div>
+<div class="modal-overlay" id="bookmarkModal"><div class="modal"><h3 id="modalTitle">Add Bookmark</h3><input type="text" class="modal-input" id="bookmarkName" placeholder="Name" autocomplete="off" /><input type="text" class="modal-input" id="bookmarkUrl" placeholder="URL" autocomplete="off" /><div id="urlError" class="error-message" style="display:none;">Please enter a valid URL</div><div class="modal-buttons"><button class="modal-btn secondary" onclick="closeBookmarkModal()">Cancel</button><button class="modal-btn primary" onclick="saveBookmarkWithValidation()">Save</button></div></div></div>
+
+<script>
+  // ==================== ADMIN & AUTH ====================
+  const ADMIN_EMAILS = ['fhuang@princetonk12.org', 'aernatas@gmail.com', 'aernixis@gmail.com'];
+  let currentUser = null, isAdmin = false;
+  let whitelist = [...ADMIN_EMAILS];
+  try { const saved = localStorage.getItem('whitelist'); if (saved) { const parsed = JSON.parse(saved); whitelist = [...new Set([...ADMIN_EMAILS, ...parsed])]; } } catch(e) {}
+
+  function checkAuth() {
+    const savedEmail = localStorage.getItem('authenticatedEmail');
+    if (savedEmail && whitelist.includes(savedEmail.toLowerCase())) { currentUser = savedEmail.toLowerCase(); isAdmin = ADMIN_EMAILS.includes(currentUser); initializeApp(); } 
+    else showAuthPrompt();
+  }
+  function showAuthPrompt() {
+    const email = prompt('Please enter your email to access this site:');
+    if (email && whitelist.includes(email.toLowerCase())) { currentUser = email.toLowerCase(); isAdmin = ADMIN_EMAILS.includes(currentUser); localStorage.setItem('authenticatedEmail', currentUser); initializeApp(); } 
+    else if (email) window.location.href = 'https://login.classlink.com/my/pps';
+    else window.location.href = 'https://login.classlink.com/my/pps';
+  }
+
+  const SEARCH_URL = "https://swisscows.com/en/web?query={query}";
+  const faviconMap = { canvas: "https://canvas.instructure.com/favicon.ico", docs: "https://www.gstatic.com/images/branding/product/1x/docs_2020q4_32dp.png", classroom: "https://upload.wikimedia.org/wikipedia/commons/5/59/Google_Classroom_Logo.png", classlink: "https://play-lh.googleusercontent.com/ujsa1M8GdT-fo-GfPazpUwgPXVWEOWKUgKZk-SdnUhmcL3opS24MiHe6ypEgqxGpllw", outlook: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cc/Microsoft_Outlook_Icon_%282025%E2%80%93present%29.svg/1280px-Microsoft_Outlook_Icon_%282025%E2%80%93present%29.svg.png" };
+  const siteNameMap = { canvas: "Canvas", docs: "Google Docs", classroom: "Google Classroom", classlink: "ClassLink", outlook: "Outlook" };
+  let tabSettings = { favicon: "canvas" };
+  let panicSettings = { key: "`", shift: false, ctrl: false, alt: false, displayString: "`", url: "https://google.com" };
+  let bookmarks = [];
+  let isRecordingKey = false, currentModifiers = { shift: false, ctrl: false, alt: false }, currentKey = null, releaseTimeout = null;
+
+  function loadSettings() { try { const savedTab = localStorage.getItem('tabSettings'); if (savedTab) tabSettings = JSON.parse(savedTab); const savedPanic = localStorage.getItem('panicSettings'); if (savedPanic) panicSettings = JSON.parse(savedPanic); const savedBookmarks = localStorage.getItem('bookmarks'); if (savedBookmarks) bookmarks = JSON.parse(savedBookmarks); } catch(e) {} }
+  function saveSettings() { localStorage.setItem('tabSettings', JSON.stringify(tabSettings)); localStorage.setItem('panicSettings', JSON.stringify(panicSettings)); localStorage.setItem('bookmarks', JSON.stringify(bookmarks)); localStorage.setItem('whitelist', JSON.stringify(whitelist.filter(e => !ADMIN_EMAILS.includes(e)))); }
+  function isValidUrl(url) { if (!url) return false; const trimmed = url.trim(); if (/^https?:\/\//i.test(trimmed)) return true; if (trimmed.includes('.') && !trimmed.includes(' ') && trimmed.length > 3) return true; return false; }
+
+  // ========== CORE: about:blank launcher ==========
+  function launchInAboutBlank(url) {
+    let finalUrl;
+    if (isValidUrl(url)) { finalUrl = /^https?:\/\//i.test(url) ? url : `https://${url}`; } 
+    else { finalUrl = SEARCH_URL.replace('{query}', encodeURIComponent(url)); }
+    const newWindow = window.open("", "_blank");
+    if (newWindow) {
+      const faviconUrl = faviconMap[tabSettings.favicon];
+      newWindow.document.open();
+      newWindow.document.write(`<!DOCTYPE html><html><head><title>${siteNameMap[tabSettings.favicon]}</title><link rel="icon" href="${faviconUrl}"><style>*{margin:0;padding:0;box-sizing:border-box;} iframe{border:none;width:100vw;height:100vh;display:block;} body{background:#0a0a0a;}</style><script>
+        window.open = function(){ return null; };
+        document.addEventListener('click', function(e) {
+          let target = e.target;
+          while(target && target !== document) {
+            if(target.tagName === 'A' && target.href) {
+              e.preventDefault(); e.stopPropagation();
+              const iframe = document.querySelector('iframe');
+              if(iframe) iframe.src = target.href;
+              return;
+            }
+            target = target.parentElement;
+          }
+        }, true);
+        const blockedDomains = ['doubleclick.net','googlesyndication.com','adservice.google.com'];
+        const origFetch = window.fetch;
+        window.fetch = (url, ...a) => { if(typeof url === 'string' && blockedDomains.some(d=>url.includes(d))) return Promise.resolve(new Response('',{status:200})); return origFetch(url,...a); };
+      <\/script></head><body><iframe src="${finalUrl}" allow="autoplay; fullscreen; clipboard-write; encrypted-media; picture-in-picture" allowfullscreen sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals"></iframe></body></html>`);
+      newWindow.document.close();
+    }
+  }
+
+  // ========== Launch current active tab in about:blank ==========
+  function launchCurrentTabInBlank() {
+    const activeTabId = document.querySelector('.tab-content.active')?.id;
+    if (!activeTabId) return;
+    
+    let targetUrl = '';
+    if (activeTabId === 'homeTab') {
+      const homeIframe = document.getElementById('embed-frame');
+      if (homeIframe && homeIframe.src) targetUrl = homeIframe.src;
+    } else if (activeTabId === 'exploreTab') {
+      const exploreIframe = document.getElementById('swisscowsIframe');
+      if (exploreIframe && exploreIframe.src) targetUrl = exploreIframe.src;
+    } else if (activeTabId === 'libraryTab') {
+      targetUrl = 'https://swisscows.com/en';
+    } else if (activeTabId === 'settingsTab') {
+      targetUrl = 'https://swisscows.com/en';
+    }
+    
+    if (targetUrl && targetUrl !== 'about:blank') {
+      launchInAboutBlank(targetUrl);
+      showToast('Launched current tab in about:blank window');
+    } else if (!targetUrl) {
+      launchInAboutBlank('https://swisscows.com/en');
+      showToast('Launched default page in about:blank');
+    }
+  }
+
+  // ========== SWISSCOWS IFRAME INTERCEPTOR ==========
+  function setupSwisscowsLinkInterceptor() {
+    const iframe = document.getElementById('swisscowsIframe');
+    if (!iframe) return;
+    const injectInterceptor = () => {
+      try {
+        const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+        if (!iframeDoc) return false;
+        if (iframeDoc.getElementById('__swiss_interceptor')) return true;
+        const script = iframeDoc.createElement('script');
+        script.id = '__swiss_interceptor';
+        script.textContent = `
+          (function() {
+            function sendLinkToParent(url) {
+              if(window.parent && window.parent !== window) {
+                window.parent.postMessage({ type: 'SWISSCOWS_LINK_CLICK', url: url }, '*');
+              }
+            }
+            document.addEventListener('click', function(e) {
+              let target = e.target;
+              while(target && target !== document) {
+                if(target.tagName === 'A' && target.href) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  sendLinkToParent(target.href);
+                  return;
+                }
+                target = target.parentElement;
+              }
+            }, true);
+          })();
+        `;
+        iframeDoc.head.appendChild(script);
+        return true;
+      } catch(err) { return false; }
+    };
+    const tryInject = () => { setTimeout(() => injectInterceptor(), 200); };
+    iframe.addEventListener('load', () => { tryInject(); });
+    tryInject();
+  }
+
+  window.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'SWISSCOWS_LINK_CLICK' && event.data.url) {
+      const targetUrl = event.data.url;
+      if (targetUrl && !targetUrl.startsWith('javascript:')) launchInAboutBlank(targetUrl);
+    }
+  });
+
+  // ========== PANIC & KEY RECORDING ==========
+  function triggerPanic() { window.location.href = panicSettings.url; }
+  function startKeyRecording() { isRecordingKey = true; currentModifiers = { shift: false, ctrl: false, alt: false }; currentKey = null; if (releaseTimeout) clearTimeout(releaseTimeout); const btn = document.getElementById('recordKeyBtn'); if(btn){ btn.classList.add('recording'); btn.textContent = 'Press keys...'; } }
+  function updateKeyDisplay() { const btn = document.getElementById('recordKeyBtn'); if (!btn) return; if (!isRecordingKey) { btn.textContent = panicSettings.displayString || 'Click to record key'; return; } const modifiers = []; if (currentModifiers.shift) modifiers.push('Shift'); if (currentModifiers.ctrl) modifiers.push('Ctrl'); if (currentModifiers.alt) modifiers.push('Alt'); let display = ''; if (modifiers.length > 0) display = modifiers.join('+') + '+'; if (currentKey) display += currentKey.toUpperCase(); else display += '?'; btn.textContent = display; }
+  function savePanicKey() { if (!currentKey) return; panicSettings.shift = currentModifiers.shift; panicSettings.ctrl = currentModifiers.ctrl; panicSettings.alt = currentModifiers.alt; panicSettings.key = currentKey; let display = ''; const mods = []; if (panicSettings.shift) mods.push('Shift'); if (panicSettings.ctrl) mods.push('Ctrl'); if (panicSettings.alt) mods.push('Alt'); if (mods.length > 0) display = mods.join('+') + '+'; display += currentKey.toUpperCase(); panicSettings.displayString = display; saveSettings(); updateKeyDisplay(); }
+  function stopKeyRecording() { if (!isRecordingKey) return; if (currentKey) savePanicKey(); isRecordingKey = false; if (releaseTimeout) clearTimeout(releaseTimeout); const btn = document.getElementById('recordKeyBtn'); if(btn) btn.classList.remove('recording'); updateKeyDisplay(); }
+  function keydownHandler(e) { if (!isRecordingKey) return; if (e.key !== 'Shift' && e.key !== 'Control' && e.key !== 'Alt' && e.key !== 'Meta') { e.preventDefault(); e.stopPropagation(); } if (releaseTimeout) clearTimeout(releaseTimeout); if (e.key === 'Shift') { currentModifiers.shift = true; updateKeyDisplay(); return; } if (e.key === 'Control') { currentModifiers.ctrl = true; updateKeyDisplay(); return; } if (e.key === 'Alt') { currentModifiers.alt = true; updateKeyDisplay(); return; } if (e.key !== 'Shift' && e.key !== 'Control' && e.key !== 'Alt' && e.key !== 'Meta') { let key = e.key; if (key === ' ') key = 'Space'; if (key === 'Escape') key = 'Esc'; if (key === 'ArrowUp') key = '↑'; if (key === 'ArrowDown') key = '↓'; if (key === 'ArrowLeft') key = '←'; if (key === 'ArrowRight') key = '→'; if (key === 'Tab') key = 'Tab'; if (key === 'Enter') key = 'Enter'; if (key === 'Backspace') key = 'Backspace'; if (key === 'Delete') key = 'Delete'; if (key === 'Home') key = 'Home'; if (key === 'End') key = 'End'; if (key === 'PageUp') key = 'PgUp'; if (key === 'PageDown') key = 'PgDn'; currentKey = key; updateKeyDisplay(); } }
+  function keyupHandler(e) { if (!isRecordingKey) return; if (e.key === 'Shift') { currentModifiers.shift = false; updateKeyDisplay(); } if (e.key === 'Control') { currentModifiers.ctrl = false; updateKeyDisplay(); } if (e.key === 'Alt') { currentModifiers.alt = false; updateKeyDisplay(); } if (currentKey && e.key.toLowerCase() === currentKey.toLowerCase()) { stopKeyRecording(); return; } if (!currentModifiers.shift && !currentModifiers.ctrl && !currentModifiers.alt && currentKey) { if (releaseTimeout) clearTimeout(releaseTimeout); releaseTimeout = setTimeout(() => { stopKeyRecording(); }, 300); } }
+  document.addEventListener('keydown', keydownHandler); document.addEventListener('keyup', keyupHandler);
+
+  // ========== BOOKMARKS & UI ==========
+  function renderBookmarksGrid() { const grid = document.getElementById('bookmarksGrid'); if (!grid) return; const addCard = document.createElement('div'); addCard.className = 'add-bookmark-card'; addCard.onclick = () => openBookmarkModal(); addCard.innerHTML = `<div class="add-icon">+</div><div class="add-text">Add Bookmark</div>`; grid.innerHTML = ''; grid.appendChild(addCard); bookmarks.forEach((bm, idx) => { const card = document.createElement('div'); card.className = 'bookmark-card'; card.innerHTML = `<div class="bookmark-icon">🔖</div><div class="bookmark-name">${escapeHtml(bm.name)}</div><div class="bookmark-url">${escapeHtml(bm.url.length > 40 ? bm.url.substring(0,40)+'...' : bm.url)}</div><div class="bookmark-actions"><button class="bookmark-edit-btn" data-idx="${idx}">Edit</button><button class="bookmark-delete-btn" data-idx="${idx}">Delete</button></div>`; card.onclick = (e) => { if (!e.target.classList.contains('bookmark-edit-btn') && !e.target.classList.contains('bookmark-delete-btn')) launchInAboutBlank(bm.url); }; const editBtn = card.querySelector('.bookmark-edit-btn'); const deleteBtn = card.querySelector('.bookmark-delete-btn'); editBtn.onclick = (e) => { e.stopPropagation(); openBookmarkModal(idx); }; deleteBtn.onclick = (e) => { e.stopPropagation(); deleteBookmark(idx); }; grid.appendChild(card); }); }
+  function deleteBookmark(idx) { bookmarks.splice(idx, 1); saveSettings(); renderBookmarksGrid(); showToast('Bookmark deleted'); }
+  
+  function renderSettingsUI() {
+    const container = document.getElementById('settingsContainer');
+    let html = `
+      <div class="settings-section">
+        <h2>Launch Current Tab</h2>
+        <div class="setting-field">
+          <button class="launch-blank-btn" onclick="launchCurrentTabInBlank()">Open Current Tab in about:blank</button>
+        </div>
+      </div>
+      <div class="settings-section">
+        <h2>About:Blank Tab Settings</h2>
+        <div class="favicon-preview"><div class="favicon-img" id="faviconDisplay"><img src="${faviconMap[tabSettings.favicon]}" alt="favicon" style="width:32px;height:32px;"></div><div class="preview-text" id="siteNameDisplay">${siteNameMap[tabSettings.favicon]}</div></div>
+        <div class="setting-field"><label>Favicon / Site Name:</label><select id="faviconSelect" onchange="saveFaviconSettings()"><option value="canvas" ${tabSettings.favicon==='canvas'?'selected':''}>Canvas</option><option value="docs" ${tabSettings.favicon==='docs'?'selected':''}>Google Docs</option><option value="classroom" ${tabSettings.favicon==='classroom'?'selected':''}>Google Classroom</option><option value="classlink" ${tabSettings.favicon==='classlink'?'selected':''}>ClassLink</option><option value="outlook" ${tabSettings.favicon==='outlook'?'selected':''}>Outlook</option></select></div>
+      </div>
+      <div class="settings-section">
+        <h2>Panic Button</h2>
+        <div class="setting-field"><label>Panic Key:</label><button id="recordKeyBtn" class="key-record-btn" onclick="startKeyRecording()">${panicSettings.displayString || 'Click to record key'}</button></div>
+        <div class="setting-field"><label>Redirect URL:</label><input type="text" id="panicUrl" value="${panicSettings.url}" onblur="savePanicUrl()" onkeypress="if(event.key==='Enter'){this.blur();}" /></div>
+      </div>`;
+    if (isAdmin) {
+      html += `<div class="settings-section"><h2>Whitelist Management</h2><div class="setting-field"><label>Add Email to Whitelist:</label><input type="email" id="newWhitelistEmail" placeholder="email@example.com" onkeypress="if(event.key==='Enter'){addToWhitelist();}" /></div><div class="setting-field"><label>Current Whitelisted Emails:</label><div id="whitelistContainer"></div></div></div>`;
+    }
+    container.innerHTML = html;
+    if (isAdmin) renderWhitelist();
+  }
+  
+  function saveFaviconSettings() { const selected = document.getElementById('faviconSelect').value; tabSettings.favicon = selected; saveSettings(); updatePreview(); showToast('Tab settings saved'); }
+  function savePanicUrl() { const newUrl = document.getElementById('panicUrl').value; if (newUrl) { panicSettings.url = newUrl; saveSettings(); showToast('Panic URL saved'); } }
+  function renderWhitelist() { const container = document.getElementById('whitelistContainer'); if (!container) return; const allEmails = [...ADMIN_EMAILS, ...whitelist.filter(e => !ADMIN_EMAILS.includes(e))]; container.innerHTML = allEmails.map(email => `<div class="whitelist-item"><span>${email} ${ADMIN_EMAILS.includes(email) ? '<span style="color:#4caf50;">(Admin)</span>' : ''}</span>${!ADMIN_EMAILS.includes(email) ? `<button class="remove-whitelist" onclick="removeFromWhitelist('${email}')">Remove</button>` : ''}</div>`).join(''); }
+  function addToWhitelist() { const input = document.getElementById('newWhitelistEmail'); const email = input.value.trim().toLowerCase(); if (email && !whitelist.includes(email) && !ADMIN_EMAILS.includes(email)) { whitelist.push(email); saveSettings(); renderWhitelist(); showToast('Email added to whitelist'); input.value = ''; } else if (ADMIN_EMAILS.includes(email)) showToast('This email is already an admin'); else if (whitelist.includes(email)) showToast('Email already in whitelist'); }
+  function removeFromWhitelist(email) { if (ADMIN_EMAILS.includes(email)) { showToast('Cannot remove admin email'); return; } whitelist = whitelist.filter(e => e !== email); saveSettings(); renderWhitelist(); showToast('Email removed from whitelist'); }
+  function updatePreview() { const favDisplay = document.getElementById('faviconDisplay'); const nameDisplay = document.getElementById('siteNameDisplay'); if (favDisplay) favDisplay.innerHTML = `<img src="${faviconMap[tabSettings.favicon]}" alt="favicon" style="width:32px;height:32px;">`; if (nameDisplay) nameDisplay.innerText = siteNameMap[tabSettings.favicon]; }
+  function openBookmarkModal(editIdx = null) { window.editIdx = editIdx; document.getElementById('modalTitle').innerText = editIdx !== null ? 'Edit Bookmark' : 'Add Bookmark'; if (editIdx !== null) { document.getElementById('bookmarkName').value = bookmarks[editIdx].name; document.getElementById('bookmarkUrl').value = bookmarks[editIdx].url; } else { document.getElementById('bookmarkName').value = ''; document.getElementById('bookmarkUrl').value = ''; } document.getElementById('bookmarkModal').classList.add('active'); }
+  function closeBookmarkModal() { document.getElementById('bookmarkModal').classList.remove('active'); }
+  function saveBookmarkWithValidation() { const name = document.getElementById('bookmarkName').value.trim(); let url = document.getElementById('bookmarkUrl').value.trim(); if (!name) { showError('Please enter a name'); return; } if (!isValidUrl(url)) { showError('Please enter a valid URL'); return; } if (!/^https?:\/\//i.test(url)) url = 'https://' + url; if (window.editIdx !== null) bookmarks[window.editIdx] = { name, url }; else bookmarks.unshift({ name, url }); saveSettings(); closeBookmarkModal(); renderBookmarksGrid(); window.editIdx = null; }
+  function showError(msg) { const errDiv = document.getElementById('urlError'); errDiv.textContent = msg; errDiv.style.display = 'block'; setTimeout(() => errDiv.style.display = 'none', 2000); }
+  function switchTab(tab, btn) { document.querySelectorAll('.icon-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active')); document.getElementById(`${tab}Tab`).classList.add('active'); if (tab === 'library') renderBookmarksGrid(); if (tab === 'settings') renderSettingsUI(); if (tab === 'explore') setTimeout(() => setupSwisscowsLinkInterceptor(), 300); }
+  function showToast(msg) { const toast = document.createElement('div'); toast.textContent = msg; toast.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:12px 24px;border-radius:40px;z-index:9999;border:1px solid #2c2c2c;backdrop-filter:blur(10px);'; document.body.appendChild(toast); setTimeout(() => toast.remove(), 2000); }
+  function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;'); }
+  function initializeApp() { loadSettings(); renderSettingsUI(); renderBookmarksGrid(); setupSwisscowsLinkInterceptor(); document.getElementById('mainLayout').style.display = 'flex'; }
+  
+  checkAuth();
+  window.switchTab = switchTab; window.closeBookmarkModal = closeBookmarkModal; window.saveBookmarkWithValidation = saveBookmarkWithValidation; window.saveFaviconSettings = saveFaviconSettings; window.savePanicUrl = savePanicUrl; window.addToWhitelist = addToWhitelist; window.removeFromWhitelist = removeFromWhitelist; window.startKeyRecording = startKeyRecording; window.triggerPanic = triggerPanic; window.launchCurrentTabInBlank = launchCurrentTabInBlank;
+</script>
+</body>
+</html>
