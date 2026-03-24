@@ -3,8 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>App UI — Trapezoidal Notch</title>
+  <title>Loading...</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <!-- Google Identity Services -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -132,11 +134,11 @@
       padding: 28px; width: 90%; max-width: 420px; box-shadow: var(--shadow-lg);
     }
     .modal h3 { font-size: 20px; font-weight: 600; margin-bottom: 20px; color: #fff; }
-    .modal-input { width: 100%; padding: 12px 16px; background: #111; border: 1px solid #2c2c2c; border-radius: 14px; color: #fff; font-size: 14px; margin-bottom: 14px; outline: none; }
+    .modal-input { width: 100%; padding: 12px 16px; background: #111; border: 1px solid #2c2c2c; border-radius: 14px; color: #fff; font-size: 14px; margin-bottom: 14px; outline: none; font-family: 'DM Sans', sans-serif; }
     .modal-input:focus { border-color: var(--search-focus); }
     .error-message { color: #cc8888; font-size: 12px; margin-top: -8px; margin-bottom: 12px; }
     .modal-buttons { display: flex; gap: 12px; margin-top: 20px; }
-    .modal-btn { flex: 1; padding: 12px; border: none; border-radius: 14px; font-weight: 600; cursor: pointer; }
+    .modal-btn { flex: 1; padding: 12px; border: none; border-radius: 14px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; }
     .modal-btn.primary { background: #ffffff; color: #111; }
     .modal-btn.primary:hover { background: #e0e0e0; }
     .modal-btn.secondary { background: #2a2a2a; color: #ddd; }
@@ -149,9 +151,12 @@
     .preview-text { font-weight: 600; color: var(--text-primary); font-size: 18px; }
     .setting-field { margin-bottom: 20px; }
     .setting-field label { display: block; margin-bottom: 8px; color: var(--text-secondary); font-size: 13px; font-weight: 500; }
-    .setting-field select, .setting-field input { width: 100%; padding: 12px 16px; background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 12px; color: var(--text-primary); font-size: 14px; outline: none; }
-    .setting-field select:focus, .setting-field input:focus { border-color: var(--search-focus); }
-    .key-record-btn, .launch-blank-btn {
+    .setting-field select, .setting-field input[type="text"] {
+      width: 100%; padding: 12px 16px; background: var(--input-bg); border: 1px solid var(--border-color);
+      border-radius: 12px; color: var(--text-primary); font-size: 14px; outline: none; font-family: 'DM Sans', sans-serif;
+    }
+    .setting-field select:focus, .setting-field input[type="text"]:focus { border-color: var(--search-focus); }
+    .key-record-btn, .launch-blank-btn, .save-btn {
       background: #2a2a2a;
       border: 2px solid var(--border-color);
       padding: 12px 20px;
@@ -163,434 +168,777 @@
       width: 100%;
       text-align: center;
       transition: all 0.2s;
+      font-family: 'DM Sans', sans-serif;
     }
+    .save-btn {
+      background: #1e3a4d;
+      border-color: #3a6e8c;
+      color: #eef4ff;
+      font-weight: 600;
+    }
+    .save-btn:hover { background: #2a4d66; transform: translateY(-1px); border-color: #5a8eac; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
     .launch-blank-btn {
       background: #1e3a4d;
       border-color: #3a6e8c;
       color: #eef4ff;
       font-weight: 600;
     }
-    .launch-blank-btn:hover {
-      background: #2a4d66;
-      transform: translateY(-1px);
-      border-color: #5a8eac;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    }
+    .launch-blank-btn:hover { background: #2a4d66; transform: translateY(-1px); border-color: #5a8eac; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
     .key-record-btn.recording { background: #3a6a3a; border-color: #8a8a8a; animation: pulse 1s infinite; }
     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
     .whitelist-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--input-bg); border-radius: 12px; margin-bottom: 8px; color: var(--text-primary); }
-    .remove-whitelist { background: rgba(204, 136, 136, 0.2); border: none; color: #cc8888; padding: 4px 12px; border-radius: 8px; cursor: pointer; }
+    .remove-whitelist { background: rgba(204, 136, 136, 0.2); border: none; color: #cc8888; padding: 4px 12px; border-radius: 8px; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+    .remove-whitelist:hover { background: rgba(204, 136, 136, 0.4); }
+    .add-whitelist-row { display: flex; gap: 10px; margin-top: 14px; }
+    .add-whitelist-input { flex: 1; padding: 12px 16px; background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 12px; color: var(--text-primary); font-size: 14px; outline: none; font-family: 'DM Sans', sans-serif; }
+    .add-whitelist-input:focus { border-color: var(--search-focus); }
+    .add-whitelist-btn { background: #2a3a2a; border: 2px solid #3a6a3a; color: #8fd88f; padding: 12px 20px; border-radius: 12px; cursor: pointer; font-weight: 600; white-space: nowrap; font-family: 'DM Sans', sans-serif; transition: all 0.2s; }
+    .add-whitelist-btn:hover { background: #3a4a3a; }
     @media (max-width: 680px) { .bookmarks-grid { justify-content: center; } .library-wrapper { padding: 20px 16px; } .settings-container { padding: 20px 16px; } }
     .click-hint { position: absolute; bottom: 16px; right: 20px; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); padding: 6px 12px; border-radius: 40px; font-size: 11px; color: #aaa; pointer-events: none; z-index: 50; font-weight: 500; }
-    
+
     /* Access Screen */
     .access-screen {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: var(--bg-main);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 3000;
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: var(--bg-main); display: flex; align-items: center; justify-content: center; z-index: 3000;
     }
     .access-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: 32px;
-      padding: 48px 40px;
-      width: 90%;
-      max-width: 440px;
-      text-align: center;
-      animation: fadeInUp 0.4s ease-out;
+      background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 32px;
+      padding: 48px 40px; width: 90%; max-width: 440px; text-align: center; animation: fadeInUp 0.4s ease-out;
     }
     @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     .access-icon { width: 80px; height: 80px; background: rgba(154, 154, 154, 0.15); border-radius: 40px; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; }
     .access-icon svg { width: 40px; height: 40px; stroke: #9a9a9a; stroke-width: 1.5; }
     .access-card h1 { font-size: 28px; font-weight: 600; color: var(--text-primary); margin-bottom: 12px; }
     .access-card p { color: var(--text-secondary); margin-bottom: 24px; line-height: 1.5; }
-    .hidden-input {
-      position: fixed;
-      top: -100px;
-      left: -100px;
-      opacity: 0;
-      pointer-events: none;
-      width: 1px;
-      height: 1px;
-    }
+    .hidden-input { position: fixed; top: -100px; left: -100px; opacity: 0; pointer-events: none; width: 1px; height: 1px; }
+
+    /* Google Sign-In styling */
+    .google-signin-area { margin-top: 20px; display: flex; flex-direction: column; align-items: center; gap: 16px; }
+    .google-signin-area .hint { font-size: 12px; color: var(--text-secondary); }
+    .g_id_signin { display: flex; justify-content: center; }
+
+    /* Owner badge */
+    .owner-badge { display: inline-block; background: rgba(100,160,255,0.15); color: #88aaff; border: 1px solid rgba(100,160,255,0.3); border-radius: 8px; padding: 2px 8px; font-size: 11px; font-weight: 600; margin-left: 8px; }
   </style>
 </head>
 <body>
-<!-- Hidden input for silent key detection -->
 <input type="text" id="silentInput" class="hidden-input" autocomplete="off" />
 
+<!-- Access screen shown while checking auth -->
 <div class="access-screen" id="accessScreen">
   <div class="access-card">
     <div class="access-icon">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/><circle cx="12" cy="12" r="3"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+        <circle cx="12" cy="12" r="3"/>
+      </svg>
     </div>
-    <h1>Access Required</h1>
-    <p>Type the access code to continue</p>
-    <div style="font-family: monospace; color: var(--text-secondary); font-size: 12px; margin-top: 16px;">Press any key to begin</div>
+    <h1 id="accessTitle">Sign In Required</h1>
+    <p id="accessSubtitle">Sign in with your Google account to continue</p>
+    <div class="google-signin-area">
+      <div id="g_id_onload"
+           data-client_id="30388178033-62l5t6mlimokpuge1b4hngct8bnp6rnl.apps.googleusercontent.com"
+           data-callback="handleGoogleCredential"
+           data-auto_prompt="true"
+           data-ux_mode="popup">
+      </div>
+      <div class="g_id_signin"
+           data-type="standard"
+           data-size="large"
+           data-theme="filled_black"
+           data-text="sign_in_with"
+           data-shape="rectangular"
+           data-logo_alignment="left">
+      </div>
+      <div class="hint" id="accessHint">Only authorized accounts may access this site</div>
+    </div>
   </div>
 </div>
 
 <div class="layout" id="mainLayout" style="display: none;">
   <aside class="sidebar">
     <div class="sidebar-top">
-      <button class="icon-btn active" onclick="switchTab('home', this)"><svg viewBox="0 0 24 24"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H5a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg></button>
-      <button class="icon-btn" onclick="switchTab('explore', this)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polygon points="16.24,7.76 14.12,14.12 7.76,16.24 9.88,9.88"/></svg></button>
-      <button class="icon-btn" onclick="switchTab('library', this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></button>
+      <button class="icon-btn active" onclick="switchTab('home', this)">
+        <svg viewBox="0 0 24 24"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H5a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>
+      </button>
+      <button class="icon-btn" onclick="switchTab('explore', this)">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polygon points="16.24,7.76 14.12,14.12 7.76,16.24 9.88,9.88"/></svg>
+      </button>
+      <button class="icon-btn" onclick="switchTab('library', this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      </button>
     </div>
     <div class="sidebar-bottom">
-      <button class="icon-btn" onclick="switchTab('settings', this)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></button>
+      <button class="icon-btn" onclick="switchTab('settings', this)">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      </button>
     </div>
   </aside>
   <main class="main">
-    <div class="tab-content active" id="homeTab"><div class="iframe-wrapper"><iframe id="embed-frame" src="https://xprime.su/" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-top-navigation allow-top-navigation-by-user-activation allow-downloads" referrerpolicy="no-referrer"></iframe></div></div>
+    <div class="tab-content active" id="homeTab">
+      <div class="iframe-wrapper">
+        <iframe id="embed-frame" src="https://shuttletv.su/"
+          sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-top-navigation allow-top-navigation-by-user-activation allow-downloads"
+          referrerpolicy="no-referrer"></iframe>
+      </div>
+    </div>
     <div class="tab-content" id="exploreTab">
       <div class="explore-wrapper">
-        <iframe id="swisscowsIframe" class="explore-iframe" src="https://swisscows.com/en" sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals allow-top-navigation-by-user-activation" referrerpolicy="no-referrer"></iframe>
+        <iframe id="privacywallIframe" class="explore-iframe" src="https://www.privacywall.org/"
+          sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals allow-top-navigation-by-user-activation"
+          referrerpolicy="no-referrer"></iframe>
         <div class="click-hint">click any link → opens in about:blank tab</div>
       </div>
     </div>
-    <div class="tab-content" id="libraryTab"><div class="library-wrapper"><div class="library-header"><h2>Library</h2><p>Your saved bookmarks</p></div><div class="bookmarks-grid" id="bookmarksGrid"></div></div></div>
-    <div class="tab-content" id="settingsTab"><div class="settings-container" id="settingsContainer"></div></div>
+    <div class="tab-content" id="libraryTab">
+      <div class="library-wrapper">
+        <div class="library-header"><h2>Library</h2><p>Your saved bookmarks</p></div>
+        <div class="bookmarks-grid" id="bookmarksGrid"></div>
+      </div>
+    </div>
+    <div class="tab-content" id="settingsTab">
+      <div class="settings-container" id="settingsContainer"></div>
+    </div>
   </main>
 </div>
-<div class="modal-overlay" id="bookmarkModal"><div class="modal"><h3 id="modalTitle">Add Bookmark</h3><input type="text" class="modal-input" id="bookmarkName" placeholder="Name" autocomplete="off" /><input type="text" class="modal-input" id="bookmarkUrl" placeholder="URL" autocomplete="off" /><div id="urlError" class="error-message" style="display:none;">Please enter a valid URL</div><div class="modal-buttons"><button class="modal-btn secondary" onclick="closeBookmarkModal()">Cancel</button><button class="modal-btn primary" onclick="saveBookmarkWithValidation()">Save</button></div></div></div>
+
+<div class="modal-overlay" id="bookmarkModal">
+  <div class="modal">
+    <h3 id="modalTitle">Add Bookmark</h3>
+    <input type="text" class="modal-input" id="bookmarkName" placeholder="Name" autocomplete="off" />
+    <input type="text" class="modal-input" id="bookmarkUrl" placeholder="URL" autocomplete="off" />
+    <div id="urlError" class="error-message" style="display:none;">Please enter a valid URL</div>
+    <div class="modal-buttons">
+      <button class="modal-btn secondary" onclick="closeBookmarkModal()">Cancel</button>
+      <button class="modal-btn primary" onclick="saveBookmarkWithValidation()">Save</button>
+    </div>
+  </div>
+</div>
 
 <script>
-  // ==================== SILENT ACCESS SYSTEM ====================
-  // Admin code: "poisonrebuild" (grants admin privileges)
-  // Regular code: "clysmn" (grants regular access)
-  
-  let currentUser = null;
-  let isAdmin = false;
-  let accessGranted = false;
-  let inputBuffer = "";
-  let resetTimeout = null;
-  
-  // Track whitelisted users for admin view (silent tracking)
-  let userTracker = [];
-  
-  // Load tracker from localStorage
+// ==================== CONSTANTS ====================
+const OWNER_EMAILS = ["aernatas@gmail.com", "fhuang@princetonk12.org"];
+const CLIENT_ID = "30388178033-62l5t6mlimokpuge1b4hngct8bnp6rnl.apps.googleusercontent.com";
+const REDIRECT_URL = "https://login.classlink.com/my/pps";
+const LAUNCH_URL = "https://aernixis.github.io/clysmn/";
+const SEARCH_URL = "https://www.privacywall.org/search/secure/?q={query}";
+
+// ==================== GLOBAL STATE ====================
+let currentUserEmail = null;
+let isOwner = false;
+let accessGranted = false;
+
+// ==================== SETTINGS DATA ====================
+const faviconMap = {
+  canvas: "https://canvas.instructure.com/favicon.ico",
+  docs: "https://www.gstatic.com/images/branding/product/1x/docs_2020q4_32dp.png",
+  classroom: "https://upload.wikimedia.org/wikipedia/commons/5/59/Google_Classroom_Logo.png",
+  classlink: "https://play-lh.googleusercontent.com/ujsa1M8GdT-fo-GfPazpUwgPXVWEOWKUgKZk-SdnUhmcL3opS24MiHe6ypEgqxGpllw",
+  outlook: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cc/Microsoft_Outlook_Icon_%282025%E2%80%93present%29.svg/1280px-Microsoft_Outlook_Icon_%282025%E2%80%93present%29.svg.png"
+};
+const siteNameMap = {
+  canvas: "Canvas",
+  docs: "Google Docs",
+  classroom: "Google Classroom",
+  classlink: "ClassLink",
+  outlook: "Outlook"
+};
+
+let tabSettings = { favicon: "canvas", title: "" };
+let panicSettings = { key: "`", shift: false, ctrl: false, alt: false, displayString: "`", url: "https://google.com" };
+let bookmarks = [];
+let whitelist = []; // stored in localStorage, managed by owners
+
+let isRecordingKey = false;
+let currentModifiers = { shift: false, ctrl: false, alt: false };
+let currentKey = null;
+let releaseTimeout = null;
+
+// ==================== JWT DECODE ====================
+function parseJwt(token) {
   try {
-    const saved = localStorage.getItem('userTracker');
-    if (saved) {
-      userTracker = JSON.parse(saved);
+    const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    return JSON.parse(atob(base64));
+  } catch(e) { return null; }
+}
+
+// ==================== GOOGLE OAUTH CALLBACK ====================
+function handleGoogleCredential(response) {
+  const payload = parseJwt(response.credential);
+  if (!payload || !payload.email) {
+    showAccessDenied("Could not read account info. Please try again.");
+    return;
+  }
+
+  const email = payload.email.toLowerCase().trim();
+  currentUserEmail = email;
+
+  // Check if owner
+  if (OWNER_EMAILS.map(e => e.toLowerCase()).includes(email)) {
+    isOwner = true;
+    accessGranted = true;
+    saveSession(email, true, response.credential);
+    loadSettingsData();
+    grantAccess();
+    return;
+  }
+
+  // Check whitelist
+  loadWhitelist();
+  if (whitelist.map(e => e.toLowerCase()).includes(email)) {
+    isOwner = false;
+    accessGranted = true;
+    saveSession(email, false, response.credential);
+    loadSettingsData();
+    grantAccess();
+    return;
+  }
+
+  // Not authorized
+  showAccessDenied("Your account (" + email + ") is not authorized. Redirecting...");
+  setTimeout(() => {
+    window.location.href = REDIRECT_URL;
+  }, 2500);
+}
+
+function showAccessDenied(msg) {
+  document.getElementById('accessTitle').textContent = "Access Denied";
+  document.getElementById('accessSubtitle').textContent = msg;
+  document.getElementById('accessHint').textContent = "";
+}
+
+// ==================== SESSION MANAGEMENT ====================
+function saveSession(email, ownerFlag, credential) {
+  const session = {
+    email: email,
+    isOwner: ownerFlag,
+    credential: credential,
+    expiresAt: Date.now() + 12 * 60 * 60 * 1000 // 12 hours
+  };
+  localStorage.setItem('gSession', JSON.stringify(session));
+}
+
+function checkExistingSession() {
+  try {
+    const raw = localStorage.getItem('gSession');
+    if (!raw) return false;
+    const session = JSON.parse(raw);
+    if (!session.expiresAt || session.expiresAt < Date.now()) {
+      localStorage.removeItem('gSession');
+      return false;
     }
+
+    const email = (session.email || "").toLowerCase().trim();
+    currentUserEmail = email;
+
+    if (OWNER_EMAILS.map(e => e.toLowerCase()).includes(email)) {
+      isOwner = true;
+    } else {
+      loadWhitelist();
+      if (!whitelist.map(e => e.toLowerCase()).includes(email)) {
+        // Previously whitelisted but now removed — deny
+        localStorage.removeItem('gSession');
+        return false;
+      }
+      isOwner = false;
+    }
+
+    accessGranted = true;
+    return true;
+  } catch(e) { return false; }
+}
+
+// ==================== WHITELIST ====================
+function loadWhitelist() {
+  try {
+    const raw = localStorage.getItem('whitelist');
+    whitelist = raw ? JSON.parse(raw) : [];
+    // Always ensure owner emails are included implicitly (not stored, just owners)
+  } catch(e) { whitelist = []; }
+}
+
+function saveWhitelist() {
+  localStorage.setItem('whitelist', JSON.stringify(whitelist));
+}
+
+function addToWhitelist(email) {
+  if (!email) return false;
+  email = email.toLowerCase().trim();
+  if (!email.includes('@')) return false;
+  if (whitelist.map(e => e.toLowerCase()).includes(email)) return false;
+  whitelist.push(email);
+  saveWhitelist();
+  return true;
+}
+
+function removeFromWhitelist(email) {
+  whitelist = whitelist.filter(e => e.toLowerCase() !== email.toLowerCase());
+  saveWhitelist();
+}
+
+// ==================== GRANT ACCESS ====================
+function grantAccess() {
+  const screen = document.getElementById('accessScreen');
+  if (screen) screen.remove();
+  document.getElementById('mainLayout').style.display = 'flex';
+  initializeApp();
+}
+
+// ==================== APP INIT ====================
+function loadSettingsData() {
+  try {
+    const savedTab = localStorage.getItem('tabSettings');
+    if (savedTab) tabSettings = { ...tabSettings, ...JSON.parse(savedTab) };
+    const savedPanic = localStorage.getItem('panicSettings');
+    if (savedPanic) panicSettings = JSON.parse(savedPanic);
+    const savedBookmarks = localStorage.getItem('bookmarks');
+    if (savedBookmarks) bookmarks = JSON.parse(savedBookmarks);
   } catch(e) {}
-  
-  function saveTracker() {
-    localStorage.setItem('userTracker', JSON.stringify(userTracker));
-  }
-  
-  // Function to grant access based on typed code
-  function checkAccessCode() {
-    const bufferLower = inputBuffer.toLowerCase();
-    
-    // Check for admin code: "poisonrebuild"
-    if (bufferLower === "poisonrebuild") {
-      isAdmin = true;
-      currentUser = "admin";
-      accessGranted = true;
-      
-      // Add to tracker
-      const existing = userTracker.find(u => u.name === "admin");
-      if (!existing) {
-        userTracker.push({ name: "admin", role: "admin", timestamp: Date.now() });
-        saveTracker();
-      }
-      
-      grantAccess();
-      return true;
-    }
-    
-    // Check for regular access code: "clysmn"
-    if (bufferLower === "clysmn") {
-      isAdmin = false;
-      currentUser = "user";
-      accessGranted = true;
-      
-      // Add to tracker
-      const existing = userTracker.find(u => u.name === "user");
-      if (!existing) {
-        userTracker.push({ name: "user", role: "regular", timestamp: Date.now() });
-        saveTracker();
-      }
-      
-      grantAccess();
-      return true;
-    }
-    
-    return false;
-  }
-  
-  function grantAccess() {
-    // Store session
-    const session = {
-      user: currentUser,
-      isAdmin: isAdmin,
-      expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000
-    };
-    localStorage.setItem('activeSession', JSON.stringify(session));
-    
-    // Remove access screen and show app
-    const accessScreen = document.getElementById('accessScreen');
-    if (accessScreen) accessScreen.remove();
-    document.getElementById('mainLayout').style.display = 'flex';
-    
-    // Initialize app
-    initializeApp();
-  }
-  
-  function resetBuffer() {
-    inputBuffer = "";
-    if (resetTimeout) clearTimeout(resetTimeout);
-  }
-  
-  // Global key listener for silent code entry
-  function handleKeyPress(e) {
-    // Only listen if access not granted yet
-    if (accessGranted) return;
-    
-    // Ignore modifier keys
-    if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Meta') return;
-    
-    // Add character to buffer
-    inputBuffer += e.key;
-    
-    // Reset timeout after 2 seconds of inactivity
-    if (resetTimeout) clearTimeout(resetTimeout);
-    resetTimeout = setTimeout(() => {
-      resetBuffer();
-    }, 2000);
-    
-    // Check if buffer matches any code
-    checkAccessCode();
-    
-    // Optional: Limit buffer size to prevent memory issues
-    if (inputBuffer.length > 50) {
-      resetBuffer();
-    }
-  }
-  
-  // Check if user has existing session
-  function checkExistingSession() {
-    const sessionData = localStorage.getItem('activeSession');
-    if (sessionData) {
-      try {
-        const session = JSON.parse(sessionData);
-        if (session.expiresAt > Date.now()) {
-          currentUser = session.user;
-          isAdmin = session.isAdmin;
-          accessGranted = true;
-          
-          // Remove access screen
-          const accessScreen = document.getElementById('accessScreen');
-          if (accessScreen) accessScreen.remove();
-          document.getElementById('mainLayout').style.display = 'flex';
-          initializeApp();
-          return true;
-        }
-      } catch(e) {}
-    }
-    return false;
-  }
-  
-  // Focus the hidden input to capture keys
-  function setupSilentInput() {
-    const hiddenInput = document.getElementById('silentInput');
-    if (hiddenInput) {
-      hiddenInput.focus();
-      hiddenInput.addEventListener('keydown', (e) => {
-        e.preventDefault();
-        handleKeyPress(e);
-        // Keep focus
-        setTimeout(() => hiddenInput.focus(), 10);
-      });
-    }
-    
-    // Also listen on document for any key press
-    document.addEventListener('keydown', (e) => {
-      // Don't interfere with other inputs when app is loaded
-      if (accessGranted) return;
-      e.preventDefault();
-      handleKeyPress(e);
-    });
-  }
-  
-  // ==================== APP FUNCTIONALITY ====================
-  const LAUNCH_URL = "https://aernixis.github.io/clysmn/";
-  const SEARCH_URL = "https://swisscows.com/en/web?query={query}";
-  const faviconMap = { canvas: "https://canvas.instructure.com/favicon.ico", docs: "https://www.gstatic.com/images/branding/product/1x/docs_2020q4_32dp.png", classroom: "https://upload.wikimedia.org/wikipedia/commons/5/59/Google_Classroom_Logo.png", classlink: "https://play-lh.googleusercontent.com/ujsa1M8GdT-fo-GfPazpUwgPXVWEOWKUgKZk-SdnUhmcL3opS24MiHe6ypEgqxGpllw", outlook: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cc/Microsoft_Outlook_Icon_%282025%E2%80%93present%29.svg/1280px-Microsoft_Outlook_Icon_%282025%E2%80%93present%29.svg.png" };
-  const siteNameMap = { canvas: "Canvas", docs: "Google Docs", classroom: "Google Classroom", classlink: "ClassLink", outlook: "Outlook" };
-  let tabSettings = { favicon: "canvas" };
-  let panicSettings = { key: "`", shift: false, ctrl: false, alt: false, displayString: "`", url: "https://google.com" };
-  let bookmarks = [];
-  let isRecordingKey = false, currentModifiers = { shift: false, ctrl: false, alt: false }, currentKey = null, releaseTimeout = null;
+}
 
-  function loadSettings() { 
-    try { 
-      const savedTab = localStorage.getItem('tabSettings'); 
-      if (savedTab) tabSettings = JSON.parse(savedTab); 
-      const savedPanic = localStorage.getItem('panicSettings'); 
-      if (savedPanic) panicSettings = JSON.parse(savedPanic); 
-      const savedBookmarks = localStorage.getItem('bookmarks'); 
-      if (savedBookmarks) bookmarks = JSON.parse(savedBookmarks); 
-    } catch(e) {} 
-  }
-  function saveSettings() { 
-    localStorage.setItem('tabSettings', JSON.stringify(tabSettings)); 
-    localStorage.setItem('panicSettings', JSON.stringify(panicSettings)); 
-    localStorage.setItem('bookmarks', JSON.stringify(bookmarks)); 
-  }
-  function isValidUrl(url) { 
-    if (!url) return false; 
-    const trimmed = url.trim(); 
-    if (/^https?:\/\//i.test(trimmed)) return true; 
-    if (trimmed.includes('.') && !trimmed.includes(' ') && trimmed.length > 3) return true; 
-    return false; 
-  }
+function saveAppSettings() {
+  localStorage.setItem('tabSettings', JSON.stringify(tabSettings));
+  localStorage.setItem('panicSettings', JSON.stringify(panicSettings));
+  localStorage.setItem('bookmarks', JSON.stringify(bookmarks));
+}
 
-  function launchInAboutBlank(url) {
-    let finalUrl;
-    if (isValidUrl(url)) { finalUrl = /^https?:\/\//i.test(url) ? url : `https://${url}`; } 
-    else { finalUrl = SEARCH_URL.replace('{query}', encodeURIComponent(url)); }
-    const newWindow = window.open("", "_blank");
-    if (newWindow) {
-      const faviconUrl = faviconMap[tabSettings.favicon];
-      newWindow.document.open();
-      newWindow.document.write(`<!DOCTYPE html><html><head><title>${siteNameMap[tabSettings.favicon]}</title><link rel="icon" href="${faviconUrl}"><style>*{margin:0;padding:0;box-sizing:border-box;} iframe{border:none;width:100vw;height:100vh;display:block;} body{background:#0a0a0a;}</style><script>window.open=function(){return null;};document.addEventListener('click',function(e){let t=e.target;while(t&&t!==document){if(t.tagName==='A'&&t.href){e.preventDefault();e.stopPropagation();const i=document.querySelector('iframe');if(i)i.src=t.href;return;}t=t.parentElement;}},true);<\/script></head><body><iframe src="${finalUrl}" allow="autoplay; fullscreen; clipboard-write; encrypted-media; picture-in-picture" allowfullscreen sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals"></iframe></body></html>`);
-      newWindow.document.close();
-    }
+function applyTabTitle() {
+  if (tabSettings.title && tabSettings.title.trim()) {
+    document.title = tabSettings.title.trim();
   }
+}
 
-  function launchCurrentTabInBlank() {
-    // Launch the specified URL instead of the current tab content
-    launchInAboutBlank(LAUNCH_URL);
-    showToast('Launched clysmn in about:blank');
-  }
+function initializeApp() {
+  loadSettingsData();
+  loadWhitelist();
+  applyTabTitle();
+  renderSettingsUI();
+  renderBookmarksGrid();
+  setupLinkInterceptor();
+}
 
-  function setupSwisscowsLinkInterceptor() {
-    const iframe = document.getElementById('swisscowsIframe');
-    if (!iframe) return;
-    const inject = () => {
-      try {
-        const doc = iframe.contentDocument || iframe.contentWindow?.document;
-        if (!doc || doc.getElementById('__interceptor')) return;
-        const script = doc.createElement('script');
-        script.id = '__interceptor';
-        script.textContent = `(function(){function send(url){window.parent.postMessage({type:'LINK_CLICK',url},'*');}document.addEventListener('click',function(e){let t=e.target;while(t&&t!==document){if(t.tagName==='A'&&t.href){e.preventDefault();send(t.href);return;}t=t.parentElement;}},true);})();`;
-        doc.head.appendChild(script);
-      } catch(e) {}
-    };
-    iframe.addEventListener('load', () => setTimeout(inject, 200));
-    setTimeout(inject, 200);
-  }
-  window.addEventListener('message', (e) => { if (e.data?.type === 'LINK_CLICK' && e.data.url) launchInAboutBlank(e.data.url); });
+// ==================== URL / LAUNCH HELPERS ====================
+function isValidUrl(url) {
+  if (!url) return false;
+  const trimmed = url.trim();
+  if (/^https?:\/\//i.test(trimmed)) return true;
+  if (trimmed.includes('.') && !trimmed.includes(' ') && trimmed.length > 3) return true;
+  return false;
+}
 
-  function renderBookmarksGrid() { 
-    const grid = document.getElementById('bookmarksGrid'); 
-    if (!grid) return; 
-    const addCard = document.createElement('div'); 
-    addCard.className = 'add-bookmark-card'; 
-    addCard.onclick = () => openBookmarkModal(); 
-    addCard.innerHTML = `<div class="add-icon">+</div><div class="add-text">Add Bookmark</div>`; 
-    grid.innerHTML = ''; 
-    grid.appendChild(addCard); 
-    bookmarks.forEach((bm, idx) => { 
-      const card = document.createElement('div'); 
-      card.className = 'bookmark-card'; 
-      card.innerHTML = `<div class="bookmark-icon">🔖</div><div class="bookmark-name">${escapeHtml(bm.name)}</div><div class="bookmark-url">${escapeHtml(bm.url.length > 40 ? bm.url.substring(0,40)+'...' : bm.url)}</div><div class="bookmark-actions"><button class="bookmark-edit-btn" data-idx="${idx}">Edit</button><button class="bookmark-delete-btn" data-idx="${idx}">Delete</button></div>`; 
-      card.onclick = (e) => { if (!e.target.classList.contains('bookmark-edit-btn') && !e.target.classList.contains('bookmark-delete-btn')) launchInAboutBlank(bm.url); }; 
-      const editBtn = card.querySelector('.bookmark-edit-btn'); 
-      const deleteBtn = card.querySelector('.bookmark-delete-btn'); 
-      editBtn.onclick = (e) => { e.stopPropagation(); openBookmarkModal(idx); }; 
-      deleteBtn.onclick = (e) => { e.stopPropagation(); deleteBookmark(idx); }; 
-      grid.appendChild(card); 
-    }); 
+function launchInAboutBlank(url) {
+  let finalUrl;
+  if (isValidUrl(url)) {
+    finalUrl = /^https?:\/\//i.test(url) ? url : `https://${url}`;
+  } else {
+    finalUrl = SEARCH_URL.replace('{query}', encodeURIComponent(url));
   }
-  function deleteBookmark(idx) { bookmarks.splice(idx, 1); saveSettings(); renderBookmarksGrid(); showToast('Bookmark deleted'); }
-  
-  function renderSettingsUI() {
-    const container = document.getElementById('settingsContainer');
-    
-    let trackerHtml = '';
-    if (isAdmin) {
-      trackerHtml = `
-        <div class="settings-section">
-          <h2>Access Tracker (Admin Only)</h2>
-          <div class="setting-field">
-            <label>Users who have accessed:</label>
-            <div id="trackerContainer"></div>
+  const newWindow = window.open("", "_blank");
+  if (newWindow) {
+    const faviconUrl = faviconMap[tabSettings.favicon];
+    const tabTitle = (tabSettings.title && tabSettings.title.trim()) ? tabSettings.title.trim() : siteNameMap[tabSettings.favicon];
+    newWindow.document.open();
+    newWindow.document.write(`<!DOCTYPE html><html><head><title>${escapeHtml(tabTitle)}</title><link rel="icon" href="${faviconUrl}"><style>*{margin:0;padding:0;box-sizing:border-box;}iframe{border:none;width:100vw;height:100vh;display:block;}body{background:#0a0a0a;}</style><script>window.open=function(){return null;};document.addEventListener('click',function(e){let t=e.target;while(t&&t!==document){if(t.tagName==='A'&&t.href){e.preventDefault();e.stopPropagation();const i=document.querySelector('iframe');if(i)i.src=t.href;return;}t=t.parentElement;}},true);<\/script></head><body><iframe src="${finalUrl}" allow="autoplay; fullscreen; clipboard-write; encrypted-media; picture-in-picture" allowfullscreen sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals"></iframe></body></html>`);
+    newWindow.document.close();
+  }
+}
+
+function launchCurrentTabInBlank() {
+  launchInAboutBlank(LAUNCH_URL);
+  showToast('Launched in about:blank');
+}
+
+// ==================== SEARCH ENGINE INTERCEPTOR ====================
+function setupLinkInterceptor() {
+  const iframe = document.getElementById('privacywallIframe');
+  if (!iframe) return;
+  const inject = () => {
+    try {
+      const doc = iframe.contentDocument || iframe.contentWindow?.document;
+      if (!doc || doc.getElementById('__interceptor')) return;
+      const script = doc.createElement('script');
+      script.id = '__interceptor';
+      script.textContent = `(function(){function send(url){window.parent.postMessage({type:'LINK_CLICK',url},'*');}document.addEventListener('click',function(e){let t=e.target;while(t&&t!==document){if(t.tagName==='A'&&t.href){e.preventDefault();send(t.href);return;}t=t.parentElement;}},true);})();`;
+      doc.head.appendChild(script);
+    } catch(e) {}
+  };
+  iframe.addEventListener('load', () => setTimeout(inject, 200));
+  setTimeout(inject, 200);
+}
+window.addEventListener('message', (e) => {
+  if (e.data?.type === 'LINK_CLICK' && e.data.url) launchInAboutBlank(e.data.url);
+});
+
+// ==================== BOOKMARKS ====================
+function renderBookmarksGrid() {
+  const grid = document.getElementById('bookmarksGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  const addCard = document.createElement('div');
+  addCard.className = 'add-bookmark-card';
+  addCard.onclick = () => openBookmarkModal();
+  addCard.innerHTML = `<div class="add-icon">+</div><div class="add-text">Add Bookmark</div>`;
+  grid.appendChild(addCard);
+  bookmarks.forEach((bm, idx) => {
+    const card = document.createElement('div');
+    card.className = 'bookmark-card';
+    card.innerHTML = `<div class="bookmark-icon">🔖</div><div class="bookmark-name">${escapeHtml(bm.name)}</div><div class="bookmark-url">${escapeHtml(bm.url.length > 40 ? bm.url.substring(0,40)+'...' : bm.url)}</div><div class="bookmark-actions"><button class="bookmark-edit-btn" data-idx="${idx}">Edit</button><button class="bookmark-delete-btn" data-idx="${idx}">Delete</button></div>`;
+    card.onclick = (e) => { if (!e.target.classList.contains('bookmark-edit-btn') && !e.target.classList.contains('bookmark-delete-btn')) launchInAboutBlank(bm.url); };
+    card.querySelector('.bookmark-edit-btn').onclick = (e) => { e.stopPropagation(); openBookmarkModal(idx); };
+    card.querySelector('.bookmark-delete-btn').onclick = (e) => { e.stopPropagation(); deleteBookmark(idx); };
+    grid.appendChild(card);
+  });
+}
+
+function deleteBookmark(idx) { bookmarks.splice(idx, 1); saveAppSettings(); renderBookmarksGrid(); showToast('Bookmark deleted'); }
+function openBookmarkModal(editIdx = null) {
+  window.editIdx = editIdx;
+  document.getElementById('modalTitle').innerText = editIdx !== null ? 'Edit Bookmark' : 'Add Bookmark';
+  document.getElementById('bookmarkName').value = editIdx !== null ? bookmarks[editIdx].name : '';
+  document.getElementById('bookmarkUrl').value = editIdx !== null ? bookmarks[editIdx].url : '';
+  document.getElementById('bookmarkModal').classList.add('active');
+}
+function closeBookmarkModal() { document.getElementById('bookmarkModal').classList.remove('active'); }
+function saveBookmarkWithValidation() {
+  const name = document.getElementById('bookmarkName').value.trim();
+  let url = document.getElementById('bookmarkUrl').value.trim();
+  if (!name) { showError('Please enter a name'); return; }
+  if (!isValidUrl(url)) { showError('Please enter a valid URL'); return; }
+  if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+  if (window.editIdx !== null) bookmarks[window.editIdx] = { name, url };
+  else bookmarks.unshift({ name, url });
+  saveAppSettings();
+  closeBookmarkModal();
+  renderBookmarksGrid();
+  window.editIdx = null;
+}
+function showError(msg) {
+  const errDiv = document.getElementById('urlError');
+  errDiv.textContent = msg;
+  errDiv.style.display = 'block';
+  setTimeout(() => errDiv.style.display = 'none', 2000);
+}
+
+// ==================== SETTINGS UI ====================
+function renderSettingsUI() {
+  const container = document.getElementById('settingsContainer');
+  if (!container) return;
+
+  const currentTitle = tabSettings.title || '';
+  const currentFavicon = tabSettings.favicon || 'canvas';
+
+  let whitelistSection = '';
+  if (isOwner) {
+    const wlItems = whitelist.length === 0
+      ? '<div class="whitelist-item" style="color:var(--text-secondary);">No whitelisted emails yet</div>'
+      : whitelist.map(e => `<div class="whitelist-item"><span>${escapeHtml(e)}</span><button class="remove-whitelist" onclick="removeWhitelistEntry('${escapeHtml(e)}')">Remove</button></div>`).join('');
+    whitelistSection = `
+      <div class="settings-section">
+        <h2>Whitelist Management <span class="owner-badge">Owner Only</span></h2>
+        <div class="setting-field">
+          <label>Authorized Emails (can access the site):</label>
+          <div id="whitelistContainer">${wlItems}</div>
+          <div class="add-whitelist-row">
+            <input type="text" class="add-whitelist-input" id="newWhitelistEmail" placeholder="user@example.com" autocomplete="off" />
+            <button class="add-whitelist-btn" onclick="addWhitelistEntry()">+ Add</button>
           </div>
         </div>
-      `;
-    }
-    
-    let html = `
-      <div class="settings-section">
-        <h2>Launch clysmn</h2>
-        <div class="setting-field"><button class="launch-blank-btn" onclick="launchCurrentTabInBlank()">Open clysmn in about:blank</button></div>
       </div>
-      <div class="settings-section">
-        <h2>About:Blank Tab Settings</h2>
-        <div class="favicon-preview"><div class="favicon-img" id="faviconDisplay"><img src="${faviconMap[tabSettings.favicon]}"></div><div class="preview-text" id="siteNameDisplay">${siteNameMap[tabSettings.favicon]}</div></div>
-        <div class="setting-field"><label>Favicon / Site Name:</label><select id="faviconSelect" onchange="saveFaviconSettings()"><option value="canvas" ${tabSettings.favicon==='canvas'?'selected':''}>Canvas</option><option value="docs" ${tabSettings.favicon==='docs'?'selected':''}>Google Docs</option><option value="classroom" ${tabSettings.favicon==='classroom'?'selected':''}>Google Classroom</option><option value="classlink" ${tabSettings.favicon==='classlink'?'selected':''}>ClassLink</option><option value="outlook" ${tabSettings.favicon==='outlook'?'selected':''}>Outlook</option></select></div>
-      </div>
-      <div class="settings-section">
-        <h2>Panic Button</h2>
-        <div class="setting-field"><label>Panic Key:</label><button id="recordKeyBtn" class="key-record-btn" onclick="startKeyRecording()">${panicSettings.displayString}</button></div>
-        <div class="setting-field"><label>Redirect URL:</label><input type="text" id="panicUrl" value="${panicSettings.url}" onblur="savePanicUrl()" /></div>
-      </div>
-      ${trackerHtml}
     `;
-    container.innerHTML = html;
-    if (isAdmin) renderTracker();
   }
-  
-  function renderTracker() {
-    const container = document.getElementById('trackerContainer');
-    if (!container) return;
-    if (userTracker.length === 0) {
-      container.innerHTML = '<div class="whitelist-item">No users recorded yet</div>';
-      return;
+
+  container.innerHTML = `
+    <div class="settings-section">
+      <h2>Launch clysmn</h2>
+      <div class="setting-field">
+        <button class="launch-blank-btn" onclick="launchCurrentTabInBlank()">Open clysmn in about:blank</button>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <h2>About:Blank Tab Settings</h2>
+      <div class="favicon-preview">
+        <div class="favicon-img" id="faviconDisplay"><img src="${faviconMap[currentFavicon]}" style="width:32px;height:32px;object-fit:contain;"></div>
+        <div class="preview-text" id="siteNameDisplay">${escapeHtml(currentTitle || siteNameMap[currentFavicon])}</div>
+      </div>
+      <div class="setting-field">
+        <label>Favicon / Site Name Preset:</label>
+        <select id="faviconSelect" onchange="onFaviconChange()">
+          <option value="canvas" ${currentFavicon==='canvas'?'selected':''}>Canvas</option>
+          <option value="docs" ${currentFavicon==='docs'?'selected':''}>Google Docs</option>
+          <option value="classroom" ${currentFavicon==='classroom'?'selected':''}>Google Classroom</option>
+          <option value="classlink" ${currentFavicon==='classlink'?'selected':''}>ClassLink</option>
+          <option value="outlook" ${currentFavicon==='outlook'?'selected':''}>Outlook</option>
+        </select>
+      </div>
+      <div class="setting-field">
+        <label>Custom Tab Title (overrides preset name):</label>
+        <input type="text" id="customTitle" value="${escapeHtml(currentTitle)}" placeholder="Leave blank to use preset name" autocomplete="off" />
+      </div>
+      <div class="setting-field">
+        <button class="save-btn" onclick="saveTabSettings()">Save Tab Settings</button>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <h2>Panic Button</h2>
+      <div class="setting-field">
+        <label>Panic Key (press to record — supports Shift, Ctrl, Alt + any key):</label>
+        <button id="recordKeyBtn" class="key-record-btn" onclick="startKeyRecording()">${escapeHtml(panicSettings.displayString || '`')}</button>
+      </div>
+      <div class="setting-field">
+        <label>Redirect URL:</label>
+        <input type="text" id="panicUrl" value="${escapeHtml(panicSettings.url)}" onblur="savePanicUrl()" autocomplete="off" />
+      </div>
+    </div>
+
+    ${whitelistSection}
+
+    <div class="settings-section">
+      <h2>Account</h2>
+      <div class="setting-field" style="color:var(--text-secondary);font-size:14px;">
+        Signed in as: <strong style="color:var(--text-primary);">${escapeHtml(currentUserEmail || 'Unknown')}${isOwner ? ' <span class="owner-badge">Owner</span>' : ''}</strong>
+      </div>
+      <div class="setting-field">
+        <button class="key-record-btn" onclick="signOut()">Sign Out</button>
+      </div>
+    </div>
+  `;
+}
+
+function onFaviconChange() {
+  const sel = document.getElementById('faviconSelect');
+  const val = sel.value;
+  const faviconDisplay = document.getElementById('faviconDisplay');
+  const siteNameDisplay = document.getElementById('siteNameDisplay');
+  if (faviconDisplay) faviconDisplay.innerHTML = `<img src="${faviconMap[val]}" style="width:32px;height:32px;object-fit:contain;">`;
+  if (siteNameDisplay) {
+    const customTitle = document.getElementById('customTitle').value.trim();
+    siteNameDisplay.textContent = customTitle || siteNameMap[val];
+  }
+}
+
+function saveTabSettings() {
+  const favicon = document.getElementById('faviconSelect').value;
+  const title = (document.getElementById('customTitle').value || '').trim();
+  tabSettings.favicon = favicon;
+  tabSettings.title = title;
+  saveAppSettings();
+  applyTabTitle();
+  // Update preview
+  document.getElementById('faviconDisplay').innerHTML = `<img src="${faviconMap[favicon]}" style="width:32px;height:32px;object-fit:contain;">`;
+  document.getElementById('siteNameDisplay').textContent = title || siteNameMap[favicon];
+  showToast('Tab settings saved');
+}
+
+function savePanicUrl() {
+  const newUrl = document.getElementById('panicUrl').value;
+  if (newUrl) { panicSettings.url = newUrl; saveAppSettings(); showToast('Panic URL saved'); }
+}
+
+// ==================== WHITELIST MANAGEMENT ====================
+function addWhitelistEntry() {
+  const input = document.getElementById('newWhitelistEmail');
+  const email = (input.value || '').trim();
+  if (!email.includes('@')) { showToast('Enter a valid email'); return; }
+  if (addToWhitelist(email)) {
+    input.value = '';
+    refreshWhitelistUI();
+    showToast('Email added to whitelist');
+  } else {
+    showToast('Already in whitelist or invalid');
+  }
+}
+
+function removeWhitelistEntry(email) {
+  removeFromWhitelist(email);
+  refreshWhitelistUI();
+  showToast('Email removed');
+}
+
+function refreshWhitelistUI() {
+  const container = document.getElementById('whitelistContainer');
+  if (!container) return;
+  container.innerHTML = whitelist.length === 0
+    ? '<div class="whitelist-item" style="color:var(--text-secondary);">No whitelisted emails yet</div>'
+    : whitelist.map(e => `<div class="whitelist-item"><span>${escapeHtml(e)}</span><button class="remove-whitelist" onclick="removeWhitelistEntry('${escapeHtml(e)}')">Remove</button></div>`).join('');
+}
+
+// ==================== SIGN OUT ====================
+function signOut() {
+  localStorage.removeItem('gSession');
+  window.location.reload();
+}
+
+// ==================== PANIC KEY ====================
+function triggerPanic() { window.location.href = panicSettings.url; }
+
+function startKeyRecording() {
+  isRecordingKey = true;
+  currentModifiers = { shift: false, ctrl: false, alt: false };
+  currentKey = null;
+  if (releaseTimeout) clearTimeout(releaseTimeout);
+  const btn = document.getElementById('recordKeyBtn');
+  if (btn) { btn.classList.add('recording'); btn.textContent = 'Press keys...'; }
+}
+
+function updateKeyDisplay() {
+  const btn = document.getElementById('recordKeyBtn');
+  if (!btn) return;
+  if (!isRecordingKey) { btn.textContent = panicSettings.displayString || 'Click to record key'; return; }
+  const modifiers = [];
+  if (currentModifiers.ctrl) modifiers.push('Ctrl');
+  if (currentModifiers.shift) modifiers.push('Shift');
+  if (currentModifiers.alt) modifiers.push('Alt');
+  let display = modifiers.length > 0 ? modifiers.join('+') + '+' : '';
+  display += currentKey ? currentKey.toUpperCase() : '?';
+  btn.textContent = display;
+}
+
+function savePanicKey() {
+  if (!currentKey) return;
+  panicSettings.shift = currentModifiers.shift;
+  panicSettings.ctrl = currentModifiers.ctrl;
+  panicSettings.alt = currentModifiers.alt;
+  panicSettings.key = currentKey;
+  const mods = [];
+  if (panicSettings.ctrl) mods.push('Ctrl');
+  if (panicSettings.shift) mods.push('Shift');
+  if (panicSettings.alt) mods.push('Alt');
+  let display = mods.length > 0 ? mods.join('+') + '+' : '';
+  display += currentKey.toUpperCase();
+  panicSettings.displayString = display;
+  saveAppSettings();
+  updateKeyDisplay();
+}
+
+function stopKeyRecording() {
+  if (!isRecordingKey) return;
+  if (currentKey) savePanicKey();
+  isRecordingKey = false;
+  if (releaseTimeout) clearTimeout(releaseTimeout);
+  const btn = document.getElementById('recordKeyBtn');
+  if (btn) btn.classList.remove('recording');
+  updateKeyDisplay();
+}
+
+function keydownHandler(e) {
+  if (!accessGranted) return;
+  if (!isRecordingKey) {
+    // Check panic key
+    const kMatch = e.key && (e.key.toLowerCase() === (panicSettings.key || '').toLowerCase() || e.key === panicSettings.key);
+    if (kMatch && e.shiftKey === panicSettings.shift && e.ctrlKey === panicSettings.ctrl && e.altKey === panicSettings.alt) {
+      triggerPanic();
     }
-    container.innerHTML = userTracker.map(user => `<div class="whitelist-item"><span>${user.name} - ${user.role} (${new Date(user.timestamp).toLocaleString()})</span></div>`).join('');
+    return;
   }
-  
-  function saveFaviconSettings() { const selected = document.getElementById('faviconSelect').value; tabSettings.favicon = selected; saveSettings(); updatePreview(); showToast('Tab settings saved'); }
-  function savePanicUrl() { const newUrl = document.getElementById('panicUrl').value; if (newUrl) { panicSettings.url = newUrl; saveSettings(); showToast('Panic URL saved'); } }
-  function updatePreview() { const favDisplay = document.getElementById('faviconDisplay'); const nameDisplay = document.getElementById('siteNameDisplay'); if (favDisplay) favDisplay.innerHTML = `<img src="${faviconMap[tabSettings.favicon]}" style="width:32px;height:32px;">`; if (nameDisplay) nameDisplay.innerText = siteNameMap[tabSettings.favicon]; }
-  function openBookmarkModal(editIdx = null) { window.editIdx = editIdx; document.getElementById('modalTitle').innerText = editIdx !== null ? 'Edit Bookmark' : 'Add Bookmark'; if (editIdx !== null) { document.getElementById('bookmarkName').value = bookmarks[editIdx].name; document.getElementById('bookmarkUrl').value = bookmarks[editIdx].url; } else { document.getElementById('bookmarkName').value = ''; document.getElementById('bookmarkUrl').value = ''; } document.getElementById('bookmarkModal').classList.add('active'); }
-  function closeBookmarkModal() { document.getElementById('bookmarkModal').classList.remove('active'); }
-  function saveBookmarkWithValidation() { const name = document.getElementById('bookmarkName').value.trim(); let url = document.getElementById('bookmarkUrl').value.trim(); if (!name) { showError('Please enter a name'); return; } if (!isValidUrl(url)) { showError('Please enter a valid URL'); return; } if (!/^https?:\/\//i.test(url)) url = 'https://' + url; if (window.editIdx !== null) bookmarks[window.editIdx] = { name, url }; else bookmarks.unshift({ name, url }); saveSettings(); closeBookmarkModal(); renderBookmarksGrid(); window.editIdx = null; }
-  function showError(msg) { const errDiv = document.getElementById('urlError'); errDiv.textContent = msg; errDiv.style.display = 'block'; setTimeout(() => errDiv.style.display = 'none', 2000); }
-  function switchTab(tab, btn) { document.querySelectorAll('.icon-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active')); document.getElementById(`${tab}Tab`).classList.add('active'); if (tab === 'library') renderBookmarksGrid(); if (tab === 'settings') renderSettingsUI(); if (tab === 'explore') setTimeout(() => setupSwisscowsLinkInterceptor(), 300); }
-  function showToast(msg) { const toast = document.createElement('div'); toast.textContent = msg; toast.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:12px 24px;border-radius:40px;z-index:9999;border:1px solid #2c2c2c;'; document.body.appendChild(toast); setTimeout(() => toast.remove(), 2000); }
-  function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;'); }
-  function initializeApp() { loadSettings(); renderSettingsUI(); renderBookmarksGrid(); setupSwisscowsLinkInterceptor(); }
-  
-  // Panic & Key Recording
-  function triggerPanic() { window.location.href = panicSettings.url; }
-  function startKeyRecording() { isRecordingKey = true; currentModifiers = { shift: false, ctrl: false, alt: false }; currentKey = null; if (releaseTimeout) clearTimeout(releaseTimeout); const btn = document.getElementById('recordKeyBtn'); if(btn){ btn.classList.add('recording'); btn.textContent = 'Press keys...'; } }
-  function updateKeyDisplay() { const btn = document.getElementById('recordKeyBtn'); if (!btn) return; if (!isRecordingKey) { btn.textContent = panicSettings.displayString || 'Click to record key'; return; } const modifiers = []; if (currentModifiers.shift) modifiers.push('Shift'); if (currentModifiers.ctrl) modifiers.push('Ctrl'); if (currentModifiers.alt) modifiers.push('Alt'); let display = ''; if (modifiers.length > 0) display = modifiers.join('+') + '+'; if (currentKey) display += currentKey.toUpperCase(); else display += '?'; btn.textContent = display; }
-  function savePanicKey() { if (!currentKey) return; panicSettings.shift = currentModifiers.shift; panicSettings.ctrl = currentModifiers.ctrl; panicSettings.alt = currentModifiers.alt; panicSettings.key = currentKey; let display = ''; const mods = []; if (panicSettings.shift) mods.push('Shift'); if (panicSettings.ctrl) mods.push('Ctrl'); if (panicSettings.alt) mods.push('Alt'); if (mods.length > 0) display = mods.join('+') + '+'; display += currentKey.toUpperCase(); panicSettings.displayString = display; saveSettings(); updateKeyDisplay(); }
-  function stopKeyRecording() { if (!isRecordingKey) return; if (currentKey) savePanicKey(); isRecordingKey = false; if (releaseTimeout) clearTimeout(releaseTimeout); const btn = document.getElementById('recordKeyBtn'); if(btn) btn.classList.remove('recording'); updateKeyDisplay(); }
-  function keydownHandler(e) { if (!isRecordingKey) return; if (e.key !== 'Shift' && e.key !== 'Control' && e.key !== 'Alt' && e.key !== 'Meta') { e.preventDefault(); e.stopPropagation(); } if (releaseTimeout) clearTimeout(releaseTimeout); if (e.key === 'Shift') { currentModifiers.shift = true; updateKeyDisplay(); return; } if (e.key === 'Control') { currentModifiers.ctrl = true; updateKeyDisplay(); return; } if (e.key === 'Alt') { currentModifiers.alt = true; updateKeyDisplay(); return; } if (e.key !== 'Shift' && e.key !== 'Control' && e.key !== 'Alt' && e.key !== 'Meta') { let key = e.key; if (key === ' ') key = 'Space'; if (key === 'Escape') key = 'Esc'; if (key === 'ArrowUp') key = '↑'; if (key === 'ArrowDown') key = '↓'; if (key === 'ArrowLeft') key = '←'; if (key === 'ArrowRight') key = '→'; if (key === 'Tab') key = 'Tab'; if (key === 'Enter') key = 'Enter'; if (key === 'Backspace') key = 'Backspace'; if (key === 'Delete') key = 'Delete'; currentKey = key; updateKeyDisplay(); } }
-  function keyupHandler(e) { if (!isRecordingKey) return; if (e.key === 'Shift') { currentModifiers.shift = false; updateKeyDisplay(); } if (e.key === 'Control') { currentModifiers.ctrl = false; updateKeyDisplay(); } if (e.key === 'Alt') { currentModifiers.alt = false; updateKeyDisplay(); } if (currentKey && e.key.toLowerCase() === currentKey.toLowerCase()) { stopKeyRecording(); return; } if (!currentModifiers.shift && !currentModifiers.ctrl && !currentModifiers.alt && currentKey) { if (releaseTimeout) clearTimeout(releaseTimeout); releaseTimeout = setTimeout(() => { stopKeyRecording(); }, 300); } }
-  document.addEventListener('keydown', keydownHandler); document.addEventListener('keyup', keyupHandler);
-  
-  window.switchTab = switchTab; window.closeBookmarkModal = closeBookmarkModal; window.saveBookmarkWithValidation = saveBookmarkWithValidation; window.saveFaviconSettings = saveFaviconSettings; window.savePanicUrl = savePanicUrl; window.startKeyRecording = startKeyRecording; window.triggerPanic = triggerPanic; window.launchCurrentTabInBlank = launchCurrentTabInBlank;
-  
-  // Start the silent access system
-  if (!checkExistingSession()) {
-    setupSilentInput();
+
+  // Recording mode
+  if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Meta') {
+    // Just track modifier state, don't prevent default
+    if (e.key === 'Shift') currentModifiers.shift = true;
+    if (e.key === 'Control') currentModifiers.ctrl = true;
+    if (e.key === 'Alt') currentModifiers.alt = true;
+    updateKeyDisplay();
+    return;
   }
+
+  e.preventDefault();
+  e.stopPropagation();
+  if (releaseTimeout) clearTimeout(releaseTimeout);
+
+  let key = e.key;
+  if (key === ' ') key = 'Space';
+  if (key === 'Escape') key = 'Esc';
+  if (key === 'ArrowUp') key = '↑';
+  if (key === 'ArrowDown') key = '↓';
+  if (key === 'ArrowLeft') key = '←';
+  if (key === 'ArrowRight') key = '→';
+  if (key === 'Tab') key = 'Tab';
+  if (key === 'Enter') key = 'Enter';
+  if (key === 'Backspace') key = 'Backspace';
+  if (key === 'Delete') key = 'Delete';
+
+  currentKey = key;
+  updateKeyDisplay();
+
+  // If no modifiers held, auto-save immediately on keyup
+}
+
+function keyupHandler(e) {
+  if (!isRecordingKey) return;
+
+  if (e.key === 'Shift') { currentModifiers.shift = false; updateKeyDisplay(); }
+  if (e.key === 'Control') { currentModifiers.ctrl = false; updateKeyDisplay(); }
+  if (e.key === 'Alt') { currentModifiers.alt = false; updateKeyDisplay(); }
+
+  // If a real key was pressed, stop recording
+  if (currentKey && e.key !== 'Shift' && e.key !== 'Control' && e.key !== 'Alt' && e.key !== 'Meta') {
+    stopKeyRecording();
+    return;
+  }
+
+  // If modifier released and we have a key, save
+  if (currentKey && !currentModifiers.shift && !currentModifiers.ctrl && !currentModifiers.alt) {
+    if (releaseTimeout) clearTimeout(releaseTimeout);
+    releaseTimeout = setTimeout(() => stopKeyRecording(), 300);
+  }
+}
+
+document.addEventListener('keydown', keydownHandler);
+document.addEventListener('keyup', keyupHandler);
+
+// ==================== TAB SWITCHING ====================
+function switchTab(tab, btn) {
+  document.querySelectorAll('.icon-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.getElementById(`${tab}Tab`).classList.add('active');
+  if (tab === 'library') renderBookmarksGrid();
+  if (tab === 'settings') renderSettingsUI();
+  if (tab === 'explore') setTimeout(() => setupLinkInterceptor(), 300);
+}
+
+// ==================== UTILS ====================
+function showToast(msg) {
+  const toast = document.createElement('div');
+  toast.textContent = msg;
+  toast.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:12px 24px;border-radius:40px;z-index:9999;border:1px solid #2c2c2c;font-family:DM Sans,sans-serif;';
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 2000);
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+// ==================== GLOBALS FOR HTML ONCLICK ====================
+window.switchTab = switchTab;
+window.closeBookmarkModal = closeBookmarkModal;
+window.saveBookmarkWithValidation = saveBookmarkWithValidation;
+window.saveTabSettings = saveTabSettings;
+window.onFaviconChange = onFaviconChange;
+window.savePanicUrl = savePanicUrl;
+window.startKeyRecording = startKeyRecording;
+window.triggerPanic = triggerPanic;
+window.launchCurrentTabInBlank = launchCurrentTabInBlank;
+window.addWhitelistEntry = addWhitelistEntry;
+window.removeWhitelistEntry = removeWhitelistEntry;
+window.signOut = signOut;
+window.handleGoogleCredential = handleGoogleCredential;
+
+// ==================== BOOT ====================
+(function boot() {
+  if (checkExistingSession()) {
+    const screen = document.getElementById('accessScreen');
+    if (screen) screen.remove();
+    document.getElementById('mainLayout').style.display = 'flex';
+    initializeApp();
+  }
+  // Otherwise Google GSI auto-prompt will trigger handleGoogleCredential
+})();
 </script>
 </body>
 </html>
