@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Loading...</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-  <!-- Google Identity Services -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -18,130 +17,78 @@
       --icon-hover: #c0c0c0;
       --divider: #2a2a2a;
       --sidebar-width: 58px;
-      --search-bg: rgba(26, 26, 26, 0.96);
-      --search-border: #333333;
-      --search-focus: #9a9a9a;
       --text-primary: #f0f0f0;
       --text-secondary: #888888;
-      --shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-      --error-color: #cc8888;
+      --shadow-lg: 0 25px 50px -12px rgba(0,0,0,0.5);
       --settings-bg: #1a1a1a;
       --input-bg: #111111;
       --border-color: #2c2c2c;
-      --success-color: #6a9e6a;
     }
     html, body { height: 100%; font-family: 'DM Sans', sans-serif; background: var(--bg-main); overflow: hidden; }
+
+    /* ── Layout ── */
     .layout { display: flex; height: 100vh; }
     .sidebar {
-      width: var(--sidebar-width);
-      background: var(--bg-sidebar);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 18px 0;
-      border-right: 1px solid var(--divider);
-      flex-shrink: 0;
-      z-index: 10;
+      width: var(--sidebar-width); background: var(--bg-sidebar);
+      display: flex; flex-direction: column; align-items: center;
+      padding: 18px 0; border-right: 1px solid var(--divider); flex-shrink: 0; z-index: 10;
     }
     .sidebar-top, .sidebar-bottom { display: flex; flex-direction: column; align-items: center; gap: 6px; }
     .sidebar-top { flex: 1; }
     .icon-btn {
-      position: relative;
-      width: 38px;
-      height: 38px;
-      border-radius: 10px;
-      border: none;
-      background: transparent;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background 0.18s ease, transform 0.15s ease;
-      color: var(--icon-default);
+      position: relative; width: 38px; height: 38px; border-radius: 10px;
+      border: none; background: transparent; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.18s, transform 0.15s; color: var(--icon-default);
     }
     .icon-btn:hover { background: rgba(255,255,255,0.05); color: var(--icon-hover); transform: scale(1.05); }
-    .icon-btn.active { background: rgba(154, 154, 154, 0.12); color: var(--icon-active); }
+    .icon-btn.active { background: rgba(154,154,154,0.12); color: var(--icon-active); }
     .icon-btn svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.7; }
     .icon-btn.active::after {
-      content: '';
-      position: absolute;
-      left: 0;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 4px;
-      height: 22px;
-      background: var(--icon-active);
+      content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+      width: 4px; height: 22px; background: var(--icon-active);
       clip-path: polygon(0% 0%, 100% 15%, 100% 85%, 0% 100%);
     }
     .main { flex: 1; background: var(--bg-main); position: relative; overflow: hidden; }
     .tab-content { display: none; height: 100%; overflow-y: auto; }
     .tab-content.active { display: block; }
+    .iframe-wrapper { position: absolute; top: 0; left: 0; right: 0; bottom: 0; }
+    #embed-frame { width: 100%; height: 100%; border: none; background: #0a0a0a; }
+
+    /* ── Explore ── */
+    .explore-wrapper { height: 100%; width: 100%; position: relative; }
+    .explore-iframe { width: 100%; height: 100%; border: none; background: #fff; }
+    .click-hint { position: absolute; bottom: 16px; right: 20px; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); padding: 6px 12px; border-radius: 40px; font-size: 11px; color: #aaa; pointer-events: none; z-index: 50; }
+
+    /* ── Library ── */
     .library-wrapper { height: 100%; width: 100%; overflow-y: auto; padding: 28px 32px; }
     .library-header { margin-bottom: 32px; }
     .library-header h2 { font-size: 24px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px; }
     .library-header p { color: var(--text-secondary); font-size: 14px; }
     .bookmarks-grid { display: flex; flex-wrap: wrap; gap: 16px; }
     .bookmark-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: 20px;
-      padding: 20px;
-      width: 200px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-      gap: 12px;
+      background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px;
+      padding: 20px; width: 200px; cursor: pointer; transition: all 0.2s;
+      display: flex; flex-direction: column; align-items: center; text-align: center; gap: 12px;
     }
-    .bookmark-card:hover { transform: translateY(-2px); border-color: var(--icon-active); background: rgba(154, 154, 154, 0.1); }
+    .bookmark-card:hover { transform: translateY(-2px); border-color: var(--icon-active); background: rgba(154,154,154,0.1); }
     .bookmark-icon { width: 48px; height: 48px; border-radius: 12px; background: #2a2a2a; display: flex; align-items: center; justify-content: center; font-size: 24px; }
     .bookmark-name { font-weight: 600; color: var(--text-primary); font-size: 14px; word-break: break-word; }
-    .bookmark-url { font-size: 11px; color: var(--text-secondary); word-break: break-all; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .bookmark-url { font-size: 11px; color: var(--text-secondary); max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .bookmark-actions { display: flex; gap: 8px; margin-top: 8px; }
-    .bookmark-edit-btn, .bookmark-delete-btn { background: rgba(255,255,255,0.05); border: none; border-radius: 8px; padding: 4px 12px; font-size: 11px; cursor: pointer; color: var(--text-secondary); transition: all 0.2s; }
-    .bookmark-edit-btn:hover { background: rgba(154, 154, 154, 0.2); color: var(--text-primary); }
-    .bookmark-delete-btn:hover { background: rgba(204, 136, 136, 0.2); color: #cc8888; }
+    .bookmark-edit-btn, .bookmark-delete-btn { background: rgba(255,255,255,0.05); border: none; border-radius: 8px; padding: 4px 12px; font-size: 11px; cursor: pointer; color: var(--text-secondary); transition: all 0.2s; font-family: inherit; }
+    .bookmark-edit-btn:hover { background: rgba(154,154,154,0.2); color: var(--text-primary); }
+    .bookmark-delete-btn:hover { background: rgba(204,136,136,0.2); color: #cc8888; }
     .add-bookmark-card {
-      background: rgba(255,255,255,0.03);
-      border: 1px dashed var(--border-color);
-      border-radius: 20px;
-      padding: 20px;
-      width: 200px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-      gap: 12px;
+      background: rgba(255,255,255,0.03); border: 1px dashed var(--border-color); border-radius: 20px;
+      padding: 20px; width: 200px; cursor: pointer; transition: all 0.2s;
+      display: flex; flex-direction: column; align-items: center; text-align: center; gap: 12px;
     }
-    .add-bookmark-card:hover { border-color: var(--icon-active); background: rgba(154, 154, 154, 0.1); }
+    .add-bookmark-card:hover { border-color: var(--icon-active); background: rgba(154,154,154,0.1); }
     .add-icon { width: 48px; height: 48px; border-radius: 12px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; font-size: 32px; color: var(--text-secondary); }
     .add-text { font-weight: 500; color: var(--text-secondary); }
-    .explore-wrapper { height: 100%; width: 100%; position: relative; }
-    .explore-iframe { width: 100%; height: 100%; border: none; background: #fff; }
-    .iframe-wrapper { position: absolute; top: 0; left: 0; right: 0; bottom: 0; }
-    #embed-frame { width: 100%; height: 100%; border: none; background: #0a0a0a; }
-    .modal-overlay {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(5px);
-      display: none; align-items: center; justify-content: center; z-index: 2000;
-    }
-    .modal-overlay.active { display: flex; }
-    .modal {
-      background: #1a1a1a; border: 1px solid #2c2c2c; border-radius: 24px;
-      padding: 28px; width: 90%; max-width: 420px; box-shadow: var(--shadow-lg);
-    }
-    .modal h3 { font-size: 20px; font-weight: 600; margin-bottom: 20px; color: #fff; }
-    .modal-input { width: 100%; padding: 12px 16px; background: #111; border: 1px solid #2c2c2c; border-radius: 14px; color: #fff; font-size: 14px; margin-bottom: 14px; outline: none; font-family: 'DM Sans', sans-serif; }
-    .modal-input:focus { border-color: var(--search-focus); }
-    .error-message { color: #cc8888; font-size: 12px; margin-top: -8px; margin-bottom: 12px; }
-    .modal-buttons { display: flex; gap: 12px; margin-top: 20px; }
-    .modal-btn { flex: 1; padding: 12px; border: none; border-radius: 14px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; }
-    .modal-btn.primary { background: #ffffff; color: #111; }
-    .modal-btn.primary:hover { background: #e0e0e0; }
-    .modal-btn.secondary { background: #2a2a2a; color: #ddd; }
+
+    /* ── Settings ── */
     .settings-container { max-width: 800px; margin: 0 auto; padding: 40px 32px; }
     .settings-section { background: var(--settings-bg); border: 1px solid var(--border-color); border-radius: 24px; padding: 28px; margin-bottom: 32px; }
     .settings-section h2 { font-size: 20px; font-weight: 600; margin-bottom: 24px; color: var(--text-primary); }
@@ -153,124 +100,143 @@
     .setting-field label { display: block; margin-bottom: 8px; color: var(--text-secondary); font-size: 13px; font-weight: 500; }
     .setting-field select, .setting-field input[type="text"] {
       width: 100%; padding: 12px 16px; background: var(--input-bg); border: 1px solid var(--border-color);
-      border-radius: 12px; color: var(--text-primary); font-size: 14px; outline: none; font-family: 'DM Sans', sans-serif;
+      border-radius: 12px; color: var(--text-primary); font-size: 14px; outline: none; font-family: inherit;
     }
-    .setting-field select:focus, .setting-field input[type="text"]:focus { border-color: var(--search-focus); }
-    .key-record-btn, .launch-blank-btn, .save-btn {
-      background: #2a2a2a;
-      border: 2px solid var(--border-color);
-      padding: 12px 20px;
-      border-radius: 12px;
-      color: var(--text-primary);
-      font-size: 14px;
-      font-weight: 500;
-      cursor: pointer;
-      width: 100%;
-      text-align: center;
-      transition: all 0.2s;
-      font-family: 'DM Sans', sans-serif;
+    .setting-field select:focus, .setting-field input[type="text"]:focus { border-color: #9a9a9a; }
+    .btn {
+      display: block; width: 100%; padding: 12px 20px; border-radius: 12px; font-size: 14px;
+      font-weight: 600; cursor: pointer; text-align: center; transition: all 0.2s; font-family: inherit; border: 2px solid;
     }
-    .save-btn {
-      background: #1e3a4d;
-      border-color: #3a6e8c;
-      color: #eef4ff;
-      font-weight: 600;
-    }
-    .save-btn:hover { background: #2a4d66; transform: translateY(-1px); border-color: #5a8eac; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
-    .launch-blank-btn {
-      background: #1e3a4d;
-      border-color: #3a6e8c;
-      color: #eef4ff;
-      font-weight: 600;
-    }
-    .launch-blank-btn:hover { background: #2a4d66; transform: translateY(-1px); border-color: #5a8eac; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+    .btn-blue { background: #1e3a4d; border-color: #3a6e8c; color: #eef4ff; }
+    .btn-blue:hover { background: #2a4d66; border-color: #5a8eac; transform: translateY(-1px); }
+    .btn-gray { background: #2a2a2a; border-color: var(--border-color); color: var(--text-primary); }
+    .btn-gray:hover { background: #333; }
+    .btn-green { background: #1e3a2a; border-color: #3a6e4a; color: #8fd88f; }
+    .btn-green:hover { background: #2a4a36; border-color: #5a8e6a; }
+    .btn-red { background: rgba(204,136,136,0.15); border-color: rgba(204,136,136,0.3); color: #cc8888; }
+    .btn-red:hover { background: rgba(204,136,136,0.25); }
+    .key-record-btn { background: #2a2a2a; border: 2px solid var(--border-color); padding: 12px 20px; border-radius: 12px; color: var(--text-primary); font-size: 14px; font-weight: 500; cursor: pointer; width: 100%; text-align: center; transition: all 0.2s; font-family: inherit; }
     .key-record-btn.recording { background: #3a6a3a; border-color: #8a8a8a; animation: pulse 1s infinite; }
-    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
-    .whitelist-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--input-bg); border-radius: 12px; margin-bottom: 8px; color: var(--text-primary); }
-    .remove-whitelist { background: rgba(204, 136, 136, 0.2); border: none; color: #cc8888; padding: 4px 12px; border-radius: 8px; cursor: pointer; font-family: 'DM Sans', sans-serif; }
-    .remove-whitelist:hover { background: rgba(204, 136, 136, 0.4); }
-    .add-whitelist-row { display: flex; gap: 10px; margin-top: 14px; }
-    .add-whitelist-input { flex: 1; padding: 12px 16px; background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 12px; color: var(--text-primary); font-size: 14px; outline: none; font-family: 'DM Sans', sans-serif; }
-    .add-whitelist-input:focus { border-color: var(--search-focus); }
-    .add-whitelist-btn { background: #2a3a2a; border: 2px solid #3a6a3a; color: #8fd88f; padding: 12px 20px; border-radius: 12px; cursor: pointer; font-weight: 600; white-space: nowrap; font-family: 'DM Sans', sans-serif; transition: all 0.2s; }
-    .add-whitelist-btn:hover { background: #3a4a3a; }
-    @media (max-width: 680px) { .bookmarks-grid { justify-content: center; } .library-wrapper { padding: 20px 16px; } .settings-container { padding: 20px 16px; } }
-    .click-hint { position: absolute; bottom: 16px; right: 20px; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); padding: 6px 12px; border-radius: 40px; font-size: 11px; color: #aaa; pointer-events: none; z-index: 50; font-weight: 500; }
+    @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.7} }
+    .whitelist-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--input-bg); border-radius: 12px; margin-bottom: 8px; color: var(--text-primary); font-size: 14px; }
+    .remove-wl { background: rgba(204,136,136,0.15); border: none; color: #cc8888; padding: 4px 12px; border-radius: 8px; cursor: pointer; font-family: inherit; font-size: 12px; transition: all 0.2s; }
+    .remove-wl:hover { background: rgba(204,136,136,0.3); }
+    .add-wl-row { display: flex; gap: 10px; margin-top: 12px; }
+    .add-wl-input { flex: 1; padding: 12px 16px; background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 12px; color: var(--text-primary); font-size: 14px; outline: none; font-family: inherit; }
+    .add-wl-input:focus { border-color: #9a9a9a; }
+    .add-wl-btn { background: #1e3a2a; border: 2px solid #3a6e4a; color: #8fd88f; padding: 12px 20px; border-radius: 12px; cursor: pointer; font-weight: 600; white-space: nowrap; font-family: inherit; transition: all 0.2s; }
+    .add-wl-btn:hover { background: #2a4a36; }
+    .owner-badge { display: inline-block; background: rgba(100,160,255,0.15); color: #88aaff; border: 1px solid rgba(100,160,255,0.3); border-radius: 8px; padding: 2px 8px; font-size: 11px; font-weight: 600; margin-left: 8px; vertical-align: middle; }
 
-    /* Access Screen */
+    /* ── Modal ── */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(5px); display: none; align-items: center; justify-content: center; z-index: 2000; }
+    .modal-overlay.active { display: flex; }
+    .modal { background: #1a1a1a; border: 1px solid #2c2c2c; border-radius: 24px; padding: 28px; width: 90%; max-width: 420px; box-shadow: var(--shadow-lg); }
+    .modal h3 { font-size: 20px; font-weight: 600; margin-bottom: 20px; color: #fff; }
+    .modal-input { width: 100%; padding: 12px 16px; background: #111; border: 1px solid #2c2c2c; border-radius: 14px; color: #fff; font-size: 14px; margin-bottom: 14px; outline: none; font-family: inherit; }
+    .modal-input:focus { border-color: #9a9a9a; }
+    .error-msg { color: #cc8888; font-size: 12px; margin-top: -8px; margin-bottom: 12px; }
+    .modal-buttons { display: flex; gap: 12px; margin-top: 20px; }
+    .modal-btn { flex: 1; padding: 12px; border: none; border-radius: 14px; font-weight: 600; cursor: pointer; font-family: inherit; }
+    .modal-btn.primary { background: #fff; color: #111; }
+    .modal-btn.primary:hover { background: #e0e0e0; }
+    .modal-btn.secondary { background: #2a2a2a; color: #ddd; }
+
+    /* ── Access Screen ── */
     .access-screen {
-      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-      background: var(--bg-main); display: flex; align-items: center; justify-content: center; z-index: 3000;
+      position: fixed; inset: 0; background: var(--bg-main);
+      display: flex; align-items: center; justify-content: center; z-index: 3000;
     }
     .access-card {
       background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 32px;
-      padding: 48px 40px; width: 90%; max-width: 440px; text-align: center; animation: fadeInUp 0.4s ease-out;
+      padding: 48px 40px; width: 90%; max-width: 440px; text-align: center;
+      animation: fadeUp 0.4s ease-out;
     }
-    @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-    .access-icon { width: 80px; height: 80px; background: rgba(154, 154, 154, 0.15); border-radius: 40px; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)} }
+    .access-icon { width: 80px; height: 80px; background: rgba(154,154,154,0.15); border-radius: 40px; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; }
     .access-icon svg { width: 40px; height: 40px; stroke: #9a9a9a; stroke-width: 1.5; }
     .access-card h1 { font-size: 28px; font-weight: 600; color: var(--text-primary); margin-bottom: 12px; }
-    .access-card p { color: var(--text-secondary); margin-bottom: 24px; line-height: 1.5; }
-    .hidden-input { position: fixed; top: -100px; left: -100px; opacity: 0; pointer-events: none; width: 1px; height: 1px; }
+    .access-card p { color: var(--text-secondary); margin-bottom: 24px; line-height: 1.5; font-size: 14px; }
+    .g_id_signin { display: flex; justify-content: center; margin-top: 16px; }
+    .access-hint { font-size: 11px; color: #444; margin-top: 20px; }
 
-    /* Google Sign-In styling */
-    .google-signin-area { margin-top: 20px; display: flex; flex-direction: column; align-items: center; gap: 16px; }
-    .google-signin-area .hint { font-size: 12px; color: var(--text-secondary); }
-    .g_id_signin { display: flex; justify-content: center; }
+    /* ── Denied Screen ── */
+    .denied-screen {
+      position: fixed; inset: 0; background: var(--bg-main);
+      display: none; align-items: center; justify-content: center; z-index: 3000;
+    }
+    .denied-screen.active { display: flex; }
+    .denied-card {
+      background: var(--bg-card); border: 1px solid #3a2020; border-radius: 32px;
+      padding: 48px 40px; width: 90%; max-width: 440px; text-align: center;
+      animation: fadeUp 0.4s ease-out;
+    }
+    .denied-icon { width: 80px; height: 80px; background: rgba(204,136,136,0.15); border-radius: 40px; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; }
+    .denied-icon svg { width: 40px; height: 40px; stroke: #cc8888; stroke-width: 1.5; }
+    .denied-card h1 { font-size: 28px; font-weight: 600; color: #cc8888; margin-bottom: 12px; }
+    .denied-card p { color: var(--text-secondary); line-height: 1.6; font-size: 14px; }
+    .redirect-bar { margin-top: 28px; height: 4px; background: #2a2a2a; border-radius: 4px; overflow: hidden; }
+    .redirect-fill { height: 100%; background: #cc8888; border-radius: 4px; width: 0%; transition: width 3s linear; }
 
-    /* Owner badge */
-    .owner-badge { display: inline-block; background: rgba(100,160,255,0.15); color: #88aaff; border: 1px solid rgba(100,160,255,0.3); border-radius: 8px; padding: 2px 8px; font-size: 11px; font-weight: 600; margin-left: 8px; }
+    @media (max-width:680px) { .bookmarks-grid{justify-content:center} .library-wrapper{padding:20px 16px} .settings-container{padding:20px 16px} }
   </style>
 </head>
 <body>
-<input type="text" id="silentInput" class="hidden-input" autocomplete="off" />
 
-<!-- Access screen shown while checking auth -->
+<!-- ── Access Screen ── -->
 <div class="access-screen" id="accessScreen">
   <div class="access-card">
     <div class="access-icon">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-        <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
-        <circle cx="12" cy="12" r="3"/>
-      </svg>
+      <svg viewBox="0 0 24 24" fill="none"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/><circle cx="12" cy="12" r="3"/></svg>
     </div>
-    <h1 id="accessTitle">Sign In Required</h1>
-    <p id="accessSubtitle">Sign in with your Google account to continue</p>
-    <div class="google-signin-area">
-      <div id="g_id_onload"
-           data-client_id="30388178033-62l5t6mlimokpuge1b4hngct8bnp6rnl.apps.googleusercontent.com"
-           data-callback="handleGoogleCredential"
-           data-auto_prompt="true"
-           data-ux_mode="popup">
-      </div>
-      <div class="g_id_signin"
-           data-type="standard"
-           data-size="large"
-           data-theme="filled_black"
-           data-text="sign_in_with"
-           data-shape="rectangular"
-           data-logo_alignment="left">
-      </div>
-      <div class="hint" id="accessHint">Only authorized accounts may access this site</div>
+    <h1>Sign In Required</h1>
+    <p>Sign in with your Google account to access this site.</p>
+    <div id="g_id_onload"
+         data-client_id="30388178033-62l5t6mlimokpuge1b4hngct8bnp6rnl.apps.googleusercontent.com"
+         data-callback="handleGoogleCredential"
+         data-auto_prompt="true"
+         data-ux_mode="popup">
     </div>
+    <div class="g_id_signin"
+         data-type="standard"
+         data-size="large"
+         data-theme="filled_black"
+         data-text="sign_in_with"
+         data-shape="rectangular"
+         data-logo_alignment="left">
+    </div>
+    <div class="access-hint" id="accessHint">Only authorized accounts may access this site</div>
   </div>
 </div>
 
-<div class="layout" id="mainLayout" style="display: none;">
+<!-- ── Denied Screen ── -->
+<div class="denied-screen" id="deniedScreen">
+  <div class="denied-card">
+    <div class="denied-icon">
+      <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+    </div>
+    <h1>Access Denied</h1>
+    <p id="deniedMsg">Your account is not authorized to access this site.</p>
+    <div class="redirect-bar"><div class="redirect-fill" id="redirectFill"></div></div>
+  </div>
+</div>
+
+<!-- ── Main App ── -->
+<div class="layout" id="mainLayout" style="display:none;">
   <aside class="sidebar">
     <div class="sidebar-top">
-      <button class="icon-btn active" onclick="switchTab('home', this)">
+      <button class="icon-btn active" onclick="switchTab('home',this)">
         <svg viewBox="0 0 24 24"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H5a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>
       </button>
-      <button class="icon-btn" onclick="switchTab('explore', this)">
+      <button class="icon-btn" onclick="switchTab('explore',this)">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polygon points="16.24,7.76 14.12,14.12 7.76,16.24 9.88,9.88"/></svg>
       </button>
-      <button class="icon-btn" onclick="switchTab('library', this)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      <button class="icon-btn" onclick="switchTab('library',this)">
+        <svg viewBox="0 0 24 24" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
       </button>
     </div>
     <div class="sidebar-bottom">
-      <button class="icon-btn" onclick="switchTab('settings', this)">
+      <button class="icon-btn" onclick="switchTab('settings',this)">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
       </button>
     </div>
@@ -303,12 +269,13 @@
   </main>
 </div>
 
+<!-- ── Bookmark Modal ── -->
 <div class="modal-overlay" id="bookmarkModal">
   <div class="modal">
     <h3 id="modalTitle">Add Bookmark</h3>
     <input type="text" class="modal-input" id="bookmarkName" placeholder="Name" autocomplete="off" />
     <input type="text" class="modal-input" id="bookmarkUrl" placeholder="URL" autocomplete="off" />
-    <div id="urlError" class="error-message" style="display:none;">Please enter a valid URL</div>
+    <div id="urlError" class="error-msg" style="display:none;"></div>
     <div class="modal-buttons">
       <button class="modal-btn secondary" onclick="closeBookmarkModal()">Cancel</button>
       <button class="modal-btn primary" onclick="saveBookmarkWithValidation()">Save</button>
@@ -317,239 +284,213 @@
 </div>
 
 <script>
-// ==================== CONSTANTS ====================
-const OWNER_EMAILS = ["aernatas@gmail.com", "fhuang@princetonk12.org"];
-const CLIENT_ID = "30388178033-62l5t6mlimokpuge1b4hngct8bnp6rnl.apps.googleusercontent.com";
-const REDIRECT_URL = "https://login.classlink.com/my/pps";
-const LAUNCH_URL = "https://aernixis.github.io/clysmn/";
-const SEARCH_URL = "https://www.privacywall.org/search/secure/?q={query}";
+// ══════════════════════════════════════════════════════
+//  CONSTANTS
+// ══════════════════════════════════════════════════════
+const OWNER_EMAILS    = ['aernatas@gmail.com', 'fhuang@princetonk12.org'];
+const REDIRECT_URL    = 'https://login.classlink.com/my/pps';
+const LAUNCH_URL      = 'https://aernixis.github.io/clysmn/';
+const SEARCH_URL      = 'https://www.privacywall.org/search/secure/?q={query}';
 
-// ==================== GLOBAL STATE ====================
-let currentUserEmail = null;
-let isOwner = false;
-let accessGranted = false;
-
-// ==================== SETTINGS DATA ====================
 const faviconMap = {
-  canvas: "https://canvas.instructure.com/favicon.ico",
-  docs: "https://www.gstatic.com/images/branding/product/1x/docs_2020q4_32dp.png",
-  classroom: "https://upload.wikimedia.org/wikipedia/commons/5/59/Google_Classroom_Logo.png",
-  classlink: "https://play-lh.googleusercontent.com/ujsa1M8GdT-fo-GfPazpUwgPXVWEOWKUgKZk-SdnUhmcL3opS24MiHe6ypEgqxGpllw",
-  outlook: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cc/Microsoft_Outlook_Icon_%282025%E2%80%93present%29.svg/1280px-Microsoft_Outlook_Icon_%282025%E2%80%93present%29.svg.png"
+  canvas:    'https://canvas.instructure.com/favicon.ico',
+  docs:      'https://www.gstatic.com/images/branding/product/1x/docs_2020q4_32dp.png',
+  classroom: 'https://upload.wikimedia.org/wikipedia/commons/5/59/Google_Classroom_Logo.png',
+  classlink: 'https://play-lh.googleusercontent.com/ujsa1M8GdT-fo-GfPazpUwgPXVWEOWKUgKZk-SdnUhmcL3opS24MiHe6ypEgqxGpllw',
+  outlook:   'https://upload.wikimedia.org/wikipedia/commons/thumb/c/cc/Microsoft_Outlook_Icon_%282025%E2%80%93present%29.svg/1280px-Microsoft_Outlook_Icon_%282025%E2%80%93present%29.svg.png'
 };
 const siteNameMap = {
-  canvas: "Canvas",
-  docs: "Google Docs",
-  classroom: "Google Classroom",
-  classlink: "ClassLink",
-  outlook: "Outlook"
+  canvas: 'Canvas', docs: 'Google Docs', classroom: 'Google Classroom',
+  classlink: 'ClassLink', outlook: 'Outlook'
 };
 
-let tabSettings = { favicon: "canvas", title: "" };
-let panicSettings = { key: "`", shift: false, ctrl: false, alt: false, displayString: "`", url: "https://google.com" };
-let bookmarks = [];
-let whitelist = []; // stored in localStorage, managed by owners
+// ══════════════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════════════
+let currentEmail  = null;
+let isOwner       = false;
+let accessGranted = false;
+let onAccessScreen = true; // true while access/denied screens are visible
+
+let tabSettings   = { favicon: 'canvas', title: '' };
+let panicSettings = { key: '`', shift: false, ctrl: false, alt: false, displayString: '`', url: 'https://google.com' };
+let bookmarks     = [];
 
 let isRecordingKey = false;
 let currentModifiers = { shift: false, ctrl: false, alt: false };
 let currentKey = null;
 let releaseTimeout = null;
 
-// ==================== JWT DECODE ====================
+// ══════════════════════════════════════════════════════
+//  TEST SHORTCUTS  (Z = denied, X = allow through)
+// ══════════════════════════════════════════════════════
+document.addEventListener('keydown', (e) => {
+  if (!onAccessScreen) return;
+  if (e.key === 'z' || e.key === 'Z') {
+    showDenied('test@example.com'); // simulate unauthorized user
+  }
+  if (e.key === 'x' || e.key === 'X') {
+    // simulate authorized access without Google
+    currentEmail  = 'test@example.com';
+    isOwner       = false;
+    accessGranted = true;
+    onAccessScreen = false;
+    document.getElementById('accessScreen').remove();
+    document.getElementById('mainLayout').style.display = 'flex';
+    initializeApp();
+  }
+});
+
+// ══════════════════════════════════════════════════════
+//  JWT DECODE
+// ══════════════════════════════════════════════════════
 function parseJwt(token) {
   try {
-    const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
-    return JSON.parse(atob(base64));
-  } catch(e) { return null; }
+    return JSON.parse(atob(token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));
+  } catch { return null; }
 }
 
-// ==================== GOOGLE OAUTH CALLBACK ====================
-function handleGoogleCredential(response) {
-  const payload = parseJwt(response.credential);
-  if (!payload || !payload.email) {
-    showAccessDenied("Could not read account info. Please try again.");
-    return;
-  }
-
-  const email = payload.email.toLowerCase().trim();
-  currentUserEmail = email;
-
-  // Check if owner
-  if (OWNER_EMAILS.map(e => e.toLowerCase()).includes(email)) {
-    isOwner = true;
-    accessGranted = true;
-    saveSession(email, true, response.credential);
-    loadSettingsData();
-    grantAccess();
-    return;
-  }
-
-  // Check whitelist
-  loadWhitelist();
-  if (whitelist.map(e => e.toLowerCase()).includes(email)) {
-    isOwner = false;
-    accessGranted = true;
-    saveSession(email, false, response.credential);
-    loadSettingsData();
-    grantAccess();
-    return;
-  }
-
-  // Not authorized
-  showAccessDenied("Your account (" + email + ") is not authorized. Redirecting...");
-  setTimeout(() => {
-    window.location.href = REDIRECT_URL;
-  }, 2500);
-}
-
-function showAccessDenied(msg) {
-  document.getElementById('accessTitle').textContent = "Access Denied";
-  document.getElementById('accessSubtitle').textContent = msg;
-  document.getElementById('accessHint').textContent = "";
-}
-
-// ==================== SESSION MANAGEMENT ====================
-function saveSession(email, ownerFlag, credential) {
-  const session = {
-    email: email,
-    isOwner: ownerFlag,
-    credential: credential,
-    expiresAt: Date.now() + 12 * 60 * 60 * 1000 // 12 hours
-  };
-  localStorage.setItem('gSession', JSON.stringify(session));
-}
-
-function checkExistingSession() {
+// ══════════════════════════════════════════════════════
+//  GOOGLE CALLBACK
+// ══════════════════════════════════════════════════════
+async function handleGoogleCredential(response) {
   try {
-    const raw = localStorage.getItem('gSession');
-    if (!raw) return false;
-    const session = JSON.parse(raw);
-    if (!session.expiresAt || session.expiresAt < Date.now()) {
-      localStorage.removeItem('gSession');
+    const res = await fetch('/api/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ credential: response.credential })
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      if (data.error === 'not_authorized') {
+        showDenied(data.email);
+      } else {
+        document.getElementById('accessHint').textContent = 'Error verifying account. Please try again.';
+      }
+      return;
+    }
+
+    // Authorized — store token permanently
+    localStorage.setItem('accessToken', data.token);
+    currentEmail  = data.email;
+    isOwner       = data.isOwner;
+    accessGranted = true;
+    onAccessScreen = false;
+    document.getElementById('accessScreen').remove();
+    document.getElementById('mainLayout').style.display = 'flex';
+    initializeApp();
+  } catch (err) {
+    document.getElementById('accessHint').textContent = 'Network error. Please try again.';
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  DENIED SCREEN
+// ══════════════════════════════════════════════════════
+function showDenied(email) {
+  onAccessScreen = false;
+  const accessScreen = document.getElementById('accessScreen');
+  if (accessScreen) accessScreen.style.display = 'none';
+
+  const denied = document.getElementById('deniedScreen');
+  document.getElementById('deniedMsg').textContent =
+    `${email} is not authorized to access this site. Redirecting...`;
+  denied.classList.add('active');
+
+  // Animate bar then redirect
+  requestAnimationFrame(() => {
+    document.getElementById('redirectFill').style.width = '100%';
+  });
+  setTimeout(() => { window.location.href = REDIRECT_URL; }, 3000);
+}
+
+// ══════════════════════════════════════════════════════
+//  SESSION CHECK ON LOAD (permanent token)
+// ══════════════════════════════════════════════════════
+async function checkStoredToken() {
+  const token = localStorage.getItem('accessToken');
+  if (!token) return false;
+
+  try {
+    const res = await fetch('/api/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token })
+    });
+    if (!res.ok) {
+      // Token invalid or user removed from whitelist
+      localStorage.removeItem('accessToken');
       return false;
     }
-
-    const email = (session.email || "").toLowerCase().trim();
-    currentUserEmail = email;
-
-    if (OWNER_EMAILS.map(e => e.toLowerCase()).includes(email)) {
-      isOwner = true;
-    } else {
-      loadWhitelist();
-      if (!whitelist.map(e => e.toLowerCase()).includes(email)) {
-        // Previously whitelisted but now removed — deny
-        localStorage.removeItem('gSession');
-        return false;
-      }
-      isOwner = false;
-    }
-
+    const data = await res.json();
+    currentEmail  = data.email;
+    isOwner       = data.isOwner;
     accessGranted = true;
+    onAccessScreen = false;
+    document.getElementById('accessScreen').remove();
+    document.getElementById('mainLayout').style.display = 'flex';
+    initializeApp();
     return true;
-  } catch(e) { return false; }
-}
-
-// ==================== WHITELIST ====================
-function loadWhitelist() {
-  try {
-    const raw = localStorage.getItem('whitelist');
-    whitelist = raw ? JSON.parse(raw) : [];
-    // Always ensure owner emails are included implicitly (not stored, just owners)
-  } catch(e) { whitelist = []; }
-}
-
-function saveWhitelist() {
-  localStorage.setItem('whitelist', JSON.stringify(whitelist));
-}
-
-function addToWhitelist(email) {
-  if (!email) return false;
-  email = email.toLowerCase().trim();
-  if (!email.includes('@')) return false;
-  if (whitelist.map(e => e.toLowerCase()).includes(email)) return false;
-  whitelist.push(email);
-  saveWhitelist();
-  return true;
-}
-
-function removeFromWhitelist(email) {
-  whitelist = whitelist.filter(e => e.toLowerCase() !== email.toLowerCase());
-  saveWhitelist();
-}
-
-// ==================== GRANT ACCESS ====================
-function grantAccess() {
-  const screen = document.getElementById('accessScreen');
-  if (screen) screen.remove();
-  document.getElementById('mainLayout').style.display = 'flex';
-  initializeApp();
-}
-
-// ==================== APP INIT ====================
-function loadSettingsData() {
-  try {
-    const savedTab = localStorage.getItem('tabSettings');
-    if (savedTab) tabSettings = { ...tabSettings, ...JSON.parse(savedTab) };
-    const savedPanic = localStorage.getItem('panicSettings');
-    if (savedPanic) panicSettings = JSON.parse(savedPanic);
-    const savedBookmarks = localStorage.getItem('bookmarks');
-    if (savedBookmarks) bookmarks = JSON.parse(savedBookmarks);
-  } catch(e) {}
-}
-
-function saveAppSettings() {
-  localStorage.setItem('tabSettings', JSON.stringify(tabSettings));
-  localStorage.setItem('panicSettings', JSON.stringify(panicSettings));
-  localStorage.setItem('bookmarks', JSON.stringify(bookmarks));
-}
-
-function applyTabTitle() {
-  if (tabSettings.title && tabSettings.title.trim()) {
-    document.title = tabSettings.title.trim();
+  } catch {
+    return false;
   }
 }
 
+// ══════════════════════════════════════════════════════
+//  APP INIT
+// ══════════════════════════════════════════════════════
+function loadAppData() {
+  try {
+    const t = localStorage.getItem('tabSettings');   if (t) tabSettings   = {...tabSettings,   ...JSON.parse(t)};
+    const p = localStorage.getItem('panicSettings'); if (p) panicSettings = JSON.parse(p);
+    const b = localStorage.getItem('bookmarks');     if (b) bookmarks     = JSON.parse(b);
+  } catch {}
+}
+function saveAppData() {
+  localStorage.setItem('tabSettings',   JSON.stringify(tabSettings));
+  localStorage.setItem('panicSettings', JSON.stringify(panicSettings));
+  localStorage.setItem('bookmarks',     JSON.stringify(bookmarks));
+}
+function applyTitle() {
+  document.title = (tabSettings.title && tabSettings.title.trim()) ? tabSettings.title.trim() : '';
+}
 function initializeApp() {
-  loadSettingsData();
-  loadWhitelist();
-  applyTabTitle();
+  loadAppData();
+  applyTitle();
   renderSettingsUI();
   renderBookmarksGrid();
   setupLinkInterceptor();
 }
 
-// ==================== URL / LAUNCH HELPERS ====================
+// ══════════════════════════════════════════════════════
+//  LAUNCH / URL HELPERS
+// ══════════════════════════════════════════════════════
 function isValidUrl(url) {
   if (!url) return false;
-  const trimmed = url.trim();
-  if (/^https?:\/\//i.test(trimmed)) return true;
-  if (trimmed.includes('.') && !trimmed.includes(' ') && trimmed.length > 3) return true;
-  return false;
+  const t = url.trim();
+  return /^https?:\/\//i.test(t) || (t.includes('.') && !t.includes(' ') && t.length > 3);
 }
 
 function launchInAboutBlank(url) {
-  let finalUrl;
-  if (isValidUrl(url)) {
-    finalUrl = /^https?:\/\//i.test(url) ? url : `https://${url}`;
-  } else {
-    finalUrl = SEARCH_URL.replace('{query}', encodeURIComponent(url));
-  }
-  const newWindow = window.open("", "_blank");
-  if (newWindow) {
-    const faviconUrl = faviconMap[tabSettings.favicon];
-    const tabTitle = (tabSettings.title && tabSettings.title.trim()) ? tabSettings.title.trim() : siteNameMap[tabSettings.favicon];
-    newWindow.document.open();
-    newWindow.document.write(`<!DOCTYPE html><html><head><title>${escapeHtml(tabTitle)}</title><link rel="icon" href="${faviconUrl}"><style>*{margin:0;padding:0;box-sizing:border-box;}iframe{border:none;width:100vw;height:100vh;display:block;}body{background:#0a0a0a;}</style><script>window.open=function(){return null;};document.addEventListener('click',function(e){let t=e.target;while(t&&t!==document){if(t.tagName==='A'&&t.href){e.preventDefault();e.stopPropagation();const i=document.querySelector('iframe');if(i)i.src=t.href;return;}t=t.parentElement;}},true);<\/script></head><body><iframe src="${finalUrl}" allow="autoplay; fullscreen; clipboard-write; encrypted-media; picture-in-picture" allowfullscreen sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals"></iframe></body></html>`);
-    newWindow.document.close();
-  }
+  const finalUrl = isValidUrl(url)
+    ? (/^https?:\/\//i.test(url) ? url : `https://${url}`)
+    : SEARCH_URL.replace('{query}', encodeURIComponent(url));
+
+  const favicon   = faviconMap[tabSettings.favicon];
+  const tabTitle  = (tabSettings.title && tabSettings.title.trim()) ? tabSettings.title.trim() : siteNameMap[tabSettings.favicon];
+  const w = window.open('', '_blank');
+  if (!w) return;
+  w.document.open();
+  w.document.write(`<!DOCTYPE html><html><head><title>${esc(tabTitle)}</title><link rel="icon" href="${favicon}"><style>*{margin:0;padding:0;box-sizing:border-box}iframe{border:none;width:100vw;height:100vh;display:block}body{background:#0a0a0a}</style><script>window.open=function(){return null};document.addEventListener('click',function(e){let t=e.target;while(t&&t!==document){if(t.tagName==='A'&&t.href){e.preventDefault();e.stopPropagation();document.querySelector('iframe').src=t.href;return;}t=t.parentElement;}},true)<\/script></head><body><iframe src="${finalUrl}" allow="autoplay;fullscreen;clipboard-write;encrypted-media" allowfullscreen sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals"></iframe></body></html>`);
+  w.document.close();
 }
 
-function launchCurrentTabInBlank() {
-  launchInAboutBlank(LAUNCH_URL);
-  showToast('Launched in about:blank');
-}
+function launchCurrentTabInBlank() { launchInAboutBlank(LAUNCH_URL); showToast('Launched in about:blank'); }
 
-// ==================== SEARCH ENGINE INTERCEPTOR ====================
+// ══════════════════════════════════════════════════════
+//  SEARCH INTERCEPTOR
+// ══════════════════════════════════════════════════════
 function setupLinkInterceptor() {
   const iframe = document.getElementById('privacywallIframe');
   if (!iframe) return;
@@ -557,139 +498,119 @@ function setupLinkInterceptor() {
     try {
       const doc = iframe.contentDocument || iframe.contentWindow?.document;
       if (!doc || doc.getElementById('__interceptor')) return;
-      const script = doc.createElement('script');
-      script.id = '__interceptor';
-      script.textContent = `(function(){function send(url){window.parent.postMessage({type:'LINK_CLICK',url},'*');}document.addEventListener('click',function(e){let t=e.target;while(t&&t!==document){if(t.tagName==='A'&&t.href){e.preventDefault();send(t.href);return;}t=t.parentElement;}},true);})();`;
-      doc.head.appendChild(script);
-    } catch(e) {}
+      const s = doc.createElement('script');
+      s.id = '__interceptor';
+      s.textContent = `(function(){document.addEventListener('click',function(e){let t=e.target;while(t&&t!==document){if(t.tagName==='A'&&t.href){e.preventDefault();window.parent.postMessage({type:'LINK_CLICK',url:t.href},'*');return;}t=t.parentElement;}},true);})();`;
+      doc.head.appendChild(s);
+    } catch {}
   };
   iframe.addEventListener('load', () => setTimeout(inject, 200));
   setTimeout(inject, 200);
 }
-window.addEventListener('message', (e) => {
-  if (e.data?.type === 'LINK_CLICK' && e.data.url) launchInAboutBlank(e.data.url);
-});
+window.addEventListener('message', (e) => { if (e.data?.type === 'LINK_CLICK') launchInAboutBlank(e.data.url); });
 
-// ==================== BOOKMARKS ====================
+// ══════════════════════════════════════════════════════
+//  BOOKMARKS
+// ══════════════════════════════════════════════════════
 function renderBookmarksGrid() {
   const grid = document.getElementById('bookmarksGrid');
   if (!grid) return;
   grid.innerHTML = '';
-  const addCard = document.createElement('div');
-  addCard.className = 'add-bookmark-card';
-  addCard.onclick = () => openBookmarkModal();
-  addCard.innerHTML = `<div class="add-icon">+</div><div class="add-text">Add Bookmark</div>`;
-  grid.appendChild(addCard);
+  const add = document.createElement('div');
+  add.className = 'add-bookmark-card';
+  add.onclick = () => openBookmarkModal();
+  add.innerHTML = `<div class="add-icon">+</div><div class="add-text">Add Bookmark</div>`;
+  grid.appendChild(add);
   bookmarks.forEach((bm, idx) => {
     const card = document.createElement('div');
     card.className = 'bookmark-card';
-    card.innerHTML = `<div class="bookmark-icon">🔖</div><div class="bookmark-name">${escapeHtml(bm.name)}</div><div class="bookmark-url">${escapeHtml(bm.url.length > 40 ? bm.url.substring(0,40)+'...' : bm.url)}</div><div class="bookmark-actions"><button class="bookmark-edit-btn" data-idx="${idx}">Edit</button><button class="bookmark-delete-btn" data-idx="${idx}">Delete</button></div>`;
+    card.innerHTML = `<div class="bookmark-icon">🔖</div><div class="bookmark-name">${esc(bm.name)}</div><div class="bookmark-url">${esc(bm.url.length>40?bm.url.slice(0,40)+'…':bm.url)}</div><div class="bookmark-actions"><button class="bookmark-edit-btn">Edit</button><button class="bookmark-delete-btn">Delete</button></div>`;
     card.onclick = (e) => { if (!e.target.classList.contains('bookmark-edit-btn') && !e.target.classList.contains('bookmark-delete-btn')) launchInAboutBlank(bm.url); };
-    card.querySelector('.bookmark-edit-btn').onclick = (e) => { e.stopPropagation(); openBookmarkModal(idx); };
+    card.querySelector('.bookmark-edit-btn').onclick   = (e) => { e.stopPropagation(); openBookmarkModal(idx); };
     card.querySelector('.bookmark-delete-btn').onclick = (e) => { e.stopPropagation(); deleteBookmark(idx); };
     grid.appendChild(card);
   });
 }
-
-function deleteBookmark(idx) { bookmarks.splice(idx, 1); saveAppSettings(); renderBookmarksGrid(); showToast('Bookmark deleted'); }
-function openBookmarkModal(editIdx = null) {
-  window.editIdx = editIdx;
-  document.getElementById('modalTitle').innerText = editIdx !== null ? 'Edit Bookmark' : 'Add Bookmark';
-  document.getElementById('bookmarkName').value = editIdx !== null ? bookmarks[editIdx].name : '';
-  document.getElementById('bookmarkUrl').value = editIdx !== null ? bookmarks[editIdx].url : '';
+function deleteBookmark(idx) { bookmarks.splice(idx,1); saveAppData(); renderBookmarksGrid(); showToast('Bookmark deleted'); }
+function openBookmarkModal(editIdx=null) {
+  window._editIdx = editIdx;
+  document.getElementById('modalTitle').textContent = editIdx!==null ? 'Edit Bookmark' : 'Add Bookmark';
+  document.getElementById('bookmarkName').value = editIdx!==null ? bookmarks[editIdx].name : '';
+  document.getElementById('bookmarkUrl').value  = editIdx!==null ? bookmarks[editIdx].url  : '';
   document.getElementById('bookmarkModal').classList.add('active');
 }
 function closeBookmarkModal() { document.getElementById('bookmarkModal').classList.remove('active'); }
 function saveBookmarkWithValidation() {
   const name = document.getElementById('bookmarkName').value.trim();
-  let url = document.getElementById('bookmarkUrl').value.trim();
-  if (!name) { showError('Please enter a name'); return; }
+  let url     = document.getElementById('bookmarkUrl').value.trim();
+  if (!name)          { showError('Please enter a name'); return; }
   if (!isValidUrl(url)) { showError('Please enter a valid URL'); return; }
   if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
-  if (window.editIdx !== null) bookmarks[window.editIdx] = { name, url };
-  else bookmarks.unshift({ name, url });
-  saveAppSettings();
-  closeBookmarkModal();
-  renderBookmarksGrid();
-  window.editIdx = null;
+  if (window._editIdx !== null && window._editIdx !== undefined) bookmarks[window._editIdx] = {name,url};
+  else bookmarks.unshift({name,url});
+  saveAppData(); closeBookmarkModal(); renderBookmarksGrid(); window._editIdx = null;
 }
-function showError(msg) {
-  const errDiv = document.getElementById('urlError');
-  errDiv.textContent = msg;
-  errDiv.style.display = 'block';
-  setTimeout(() => errDiv.style.display = 'none', 2000);
-}
+function showError(msg) { const d=document.getElementById('urlError'); d.textContent=msg; d.style.display='block'; setTimeout(()=>d.style.display='none',2500); }
 
-// ==================== SETTINGS UI ====================
-function renderSettingsUI() {
+// ══════════════════════════════════════════════════════
+//  SETTINGS UI
+// ══════════════════════════════════════════════════════
+async function renderSettingsUI() {
   const container = document.getElementById('settingsContainer');
   if (!container) return;
 
-  const currentTitle = tabSettings.title || '';
-  const currentFavicon = tabSettings.favicon || 'canvas';
+  const fav   = tabSettings.favicon || 'canvas';
+  const title = tabSettings.title   || '';
 
   let whitelistSection = '';
   if (isOwner) {
-    const wlItems = whitelist.length === 0
-      ? '<div class="whitelist-item" style="color:var(--text-secondary);">No whitelisted emails yet</div>'
-      : whitelist.map(e => `<div class="whitelist-item"><span>${escapeHtml(e)}</span><button class="remove-whitelist" onclick="removeWhitelistEntry('${escapeHtml(e)}')">Remove</button></div>`).join('');
+    // Fetch live whitelist from server
+    let wlItems = '<div class="whitelist-item" style="color:var(--text-secondary)">Loading...</div>';
     whitelistSection = `
       <div class="settings-section">
         <h2>Whitelist Management <span class="owner-badge">Owner Only</span></h2>
-        <div class="setting-field">
-          <label>Authorized Emails (can access the site):</label>
-          <div id="whitelistContainer">${wlItems}</div>
-          <div class="add-whitelist-row">
-            <input type="text" class="add-whitelist-input" id="newWhitelistEmail" placeholder="user@example.com" autocomplete="off" />
-            <button class="add-whitelist-btn" onclick="addWhitelistEntry()">+ Add</button>
-          </div>
+        <div id="whitelistContainer">${wlItems}</div>
+        <div class="add-wl-row">
+          <input type="text" class="add-wl-input" id="newWlEmail" placeholder="user@example.com" autocomplete="off"/>
+          <button class="add-wl-btn" onclick="addWhitelistEntry()">+ Add</button>
         </div>
-      </div>
-    `;
+      </div>`;
   }
 
   container.innerHTML = `
     <div class="settings-section">
       <h2>Launch clysmn</h2>
-      <div class="setting-field">
-        <button class="launch-blank-btn" onclick="launchCurrentTabInBlank()">Open clysmn in about:blank</button>
-      </div>
+      <div class="setting-field"><button class="btn btn-blue" onclick="launchCurrentTabInBlank()">Open clysmn in about:blank</button></div>
     </div>
 
     <div class="settings-section">
       <h2>About:Blank Tab Settings</h2>
       <div class="favicon-preview">
-        <div class="favicon-img" id="faviconDisplay"><img src="${faviconMap[currentFavicon]}" style="width:32px;height:32px;object-fit:contain;"></div>
-        <div class="preview-text" id="siteNameDisplay">${escapeHtml(currentTitle || siteNameMap[currentFavicon])}</div>
+        <div class="favicon-img" id="faviconDisplay"><img src="${faviconMap[fav]}" style="width:32px;height:32px;object-fit:contain"></div>
+        <div class="preview-text" id="siteNameDisplay">${esc(title || siteNameMap[fav])}</div>
       </div>
       <div class="setting-field">
-        <label>Favicon / Site Name Preset:</label>
+        <label>Favicon / Site Name Preset</label>
         <select id="faviconSelect" onchange="onFaviconChange()">
-          <option value="canvas" ${currentFavicon==='canvas'?'selected':''}>Canvas</option>
-          <option value="docs" ${currentFavicon==='docs'?'selected':''}>Google Docs</option>
-          <option value="classroom" ${currentFavicon==='classroom'?'selected':''}>Google Classroom</option>
-          <option value="classlink" ${currentFavicon==='classlink'?'selected':''}>ClassLink</option>
-          <option value="outlook" ${currentFavicon==='outlook'?'selected':''}>Outlook</option>
+          ${Object.keys(siteNameMap).map(k=>`<option value="${k}" ${fav===k?'selected':''}>${siteNameMap[k]}</option>`).join('')}
         </select>
       </div>
       <div class="setting-field">
-        <label>Custom Tab Title (overrides preset name):</label>
-        <input type="text" id="customTitle" value="${escapeHtml(currentTitle)}" placeholder="Leave blank to use preset name" autocomplete="off" />
+        <label>Custom Tab Title <span style="color:#555;font-weight:400">(overrides preset name)</span></label>
+        <input type="text" id="customTitle" value="${esc(title)}" placeholder="Leave blank to use preset name" autocomplete="off"/>
       </div>
-      <div class="setting-field">
-        <button class="save-btn" onclick="saveTabSettings()">Save Tab Settings</button>
-      </div>
+      <div class="setting-field"><button class="btn btn-blue" onclick="saveTabSettings()">Save Tab Settings</button></div>
     </div>
 
     <div class="settings-section">
       <h2>Panic Button</h2>
       <div class="setting-field">
-        <label>Panic Key (press to record — supports Shift, Ctrl, Alt + any key):</label>
-        <button id="recordKeyBtn" class="key-record-btn" onclick="startKeyRecording()">${escapeHtml(panicSettings.displayString || '`')}</button>
+        <label>Panic Key</label>
+        <button id="recordKeyBtn" class="key-record-btn" onclick="startKeyRecording()">${esc(panicSettings.displayString||'`')}</button>
       </div>
       <div class="setting-field">
-        <label>Redirect URL:</label>
-        <input type="text" id="panicUrl" value="${escapeHtml(panicSettings.url)}" onblur="savePanicUrl()" autocomplete="off" />
+        <label>Redirect URL</label>
+        <input type="text" id="panicUrl" value="${esc(panicSettings.url)}" onblur="savePanicUrl()" autocomplete="off"/>
       </div>
     </div>
 
@@ -698,121 +619,129 @@ function renderSettingsUI() {
     <div class="settings-section">
       <h2>Account</h2>
       <div class="setting-field" style="color:var(--text-secondary);font-size:14px;">
-        Signed in as: <strong style="color:var(--text-primary);">${escapeHtml(currentUserEmail || 'Unknown')}${isOwner ? ' <span class="owner-badge">Owner</span>' : ''}</strong>
+        Signed in as <strong style="color:var(--text-primary)">${esc(currentEmail||'Unknown')}${isOwner?'<span class="owner-badge">Owner</span>':''}</strong>
       </div>
-      <div class="setting-field">
-        <button class="key-record-btn" onclick="signOut()">Sign Out</button>
-      </div>
-    </div>
-  `;
+      <div class="setting-field"><button class="btn btn-gray" onclick="signOut()">Sign Out</button></div>
+    </div>`;
+
+  if (isOwner) loadWhitelistUI();
 }
 
 function onFaviconChange() {
-  const sel = document.getElementById('faviconSelect');
-  const val = sel.value;
-  const faviconDisplay = document.getElementById('faviconDisplay');
-  const siteNameDisplay = document.getElementById('siteNameDisplay');
-  if (faviconDisplay) faviconDisplay.innerHTML = `<img src="${faviconMap[val]}" style="width:32px;height:32px;object-fit:contain;">`;
-  if (siteNameDisplay) {
-    const customTitle = document.getElementById('customTitle').value.trim();
-    siteNameDisplay.textContent = customTitle || siteNameMap[val];
-  }
+  const val = document.getElementById('faviconSelect').value;
+  document.getElementById('faviconDisplay').innerHTML = `<img src="${faviconMap[val]}" style="width:32px;height:32px;object-fit:contain">`;
+  const t = (document.getElementById('customTitle').value || '').trim();
+  document.getElementById('siteNameDisplay').textContent = t || siteNameMap[val];
 }
 
 function saveTabSettings() {
-  const favicon = document.getElementById('faviconSelect').value;
-  const title = (document.getElementById('customTitle').value || '').trim();
-  tabSettings.favicon = favicon;
-  tabSettings.title = title;
-  saveAppSettings();
-  applyTabTitle();
-  // Update preview
-  document.getElementById('faviconDisplay').innerHTML = `<img src="${faviconMap[favicon]}" style="width:32px;height:32px;object-fit:contain;">`;
-  document.getElementById('siteNameDisplay').textContent = title || siteNameMap[favicon];
+  tabSettings.favicon = document.getElementById('faviconSelect').value;
+  tabSettings.title   = (document.getElementById('customTitle').value || '').trim();
+  saveAppData(); applyTitle();
+  document.getElementById('faviconDisplay').innerHTML = `<img src="${faviconMap[tabSettings.favicon]}" style="width:32px;height:32px;object-fit:contain">`;
+  document.getElementById('siteNameDisplay').textContent = tabSettings.title || siteNameMap[tabSettings.favicon];
   showToast('Tab settings saved');
 }
 
 function savePanicUrl() {
-  const newUrl = document.getElementById('panicUrl').value;
-  if (newUrl) { panicSettings.url = newUrl; saveAppSettings(); showToast('Panic URL saved'); }
+  const v = document.getElementById('panicUrl').value;
+  if (v) { panicSettings.url = v; saveAppData(); showToast('Panic URL saved'); }
 }
 
-// ==================== WHITELIST MANAGEMENT ====================
-function addWhitelistEntry() {
-  const input = document.getElementById('newWhitelistEmail');
-  const email = (input.value || '').trim();
-  if (!email.includes('@')) { showToast('Enter a valid email'); return; }
-  if (addToWhitelist(email)) {
-    input.value = '';
-    refreshWhitelistUI();
-    showToast('Email added to whitelist');
-  } else {
-    showToast('Already in whitelist or invalid');
-  }
-}
+// ══════════════════════════════════════════════════════
+//  WHITELIST (owner)
+// ══════════════════════════════════════════════════════
+function getToken() { return localStorage.getItem('accessToken') || ''; }
 
-function removeWhitelistEntry(email) {
-  removeFromWhitelist(email);
-  refreshWhitelistUI();
-  showToast('Email removed');
-}
-
-function refreshWhitelistUI() {
+async function loadWhitelistUI() {
   const container = document.getElementById('whitelistContainer');
   if (!container) return;
-  container.innerHTML = whitelist.length === 0
-    ? '<div class="whitelist-item" style="color:var(--text-secondary);">No whitelisted emails yet</div>'
-    : whitelist.map(e => `<div class="whitelist-item"><span>${escapeHtml(e)}</span><button class="remove-whitelist" onclick="removeWhitelistEntry('${escapeHtml(e)}')">Remove</button></div>`).join('');
+  try {
+    const res = await fetch('/api/whitelist', { headers: { 'Authorization': 'Bearer ' + getToken() } });
+    const data = await res.json();
+    renderWhitelistItems(data.whitelist || []);
+  } catch { container.innerHTML = '<div class="whitelist-item" style="color:#cc8888">Failed to load whitelist</div>'; }
 }
 
-// ==================== SIGN OUT ====================
-function signOut() {
-  localStorage.removeItem('gSession');
-  window.location.reload();
+function renderWhitelistItems(list) {
+  const container = document.getElementById('whitelistContainer');
+  if (!container) return;
+  container.innerHTML = list.length === 0
+    ? '<div class="whitelist-item" style="color:var(--text-secondary)">No whitelisted emails yet</div>'
+    : list.map(e => `<div class="whitelist-item"><span>${esc(e)}</span><button class="remove-wl" onclick="removeWhitelistEntry('${esc(e)}')">Remove</button></div>`).join('');
 }
 
-// ==================== PANIC KEY ====================
+async function addWhitelistEntry() {
+  const input = document.getElementById('newWlEmail');
+  const email = (input.value || '').trim();
+  if (!email.includes('@')) { showToast('Enter a valid email'); return; }
+  try {
+    const res  = await fetch('/api/whitelist', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+      body: JSON.stringify({ email })
+    });
+    const data = await res.json();
+    input.value = '';
+    renderWhitelistItems(data.whitelist || []);
+    showToast('Email added');
+  } catch { showToast('Failed to add email'); }
+}
+
+async function removeWhitelistEntry(email) {
+  try {
+    const res  = await fetch('/api/whitelist', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+      body: JSON.stringify({ email })
+    });
+    const data = await res.json();
+    renderWhitelistItems(data.whitelist || []);
+    showToast('Email removed');
+  } catch { showToast('Failed to remove email'); }
+}
+
+// ══════════════════════════════════════════════════════
+//  SIGN OUT
+// ══════════════════════════════════════════════════════
+function signOut() { localStorage.removeItem('accessToken'); window.location.reload(); }
+
+// ══════════════════════════════════════════════════════
+//  PANIC KEY
+// ══════════════════════════════════════════════════════
 function triggerPanic() { window.location.href = panicSettings.url; }
 
 function startKeyRecording() {
   isRecordingKey = true;
-  currentModifiers = { shift: false, ctrl: false, alt: false };
+  currentModifiers = { shift:false, ctrl:false, alt:false };
   currentKey = null;
   if (releaseTimeout) clearTimeout(releaseTimeout);
   const btn = document.getElementById('recordKeyBtn');
-  if (btn) { btn.classList.add('recording'); btn.textContent = 'Press keys...'; }
+  if (btn) { btn.classList.add('recording'); btn.textContent = 'Press keys…'; }
 }
-
 function updateKeyDisplay() {
   const btn = document.getElementById('recordKeyBtn');
   if (!btn) return;
-  if (!isRecordingKey) { btn.textContent = panicSettings.displayString || 'Click to record key'; return; }
-  const modifiers = [];
-  if (currentModifiers.ctrl) modifiers.push('Ctrl');
-  if (currentModifiers.shift) modifiers.push('Shift');
-  if (currentModifiers.alt) modifiers.push('Alt');
-  let display = modifiers.length > 0 ? modifiers.join('+') + '+' : '';
-  display += currentKey ? currentKey.toUpperCase() : '?';
-  btn.textContent = display;
+  if (!isRecordingKey) { btn.textContent = panicSettings.displayString || 'Click to record'; return; }
+  const mods = [];
+  if (currentModifiers.ctrl)  mods.push('Ctrl');
+  if (currentModifiers.shift) mods.push('Shift');
+  if (currentModifiers.alt)   mods.push('Alt');
+  btn.textContent = (mods.length ? mods.join('+')+'+' : '') + (currentKey ? currentKey.toUpperCase() : '?');
 }
-
 function savePanicKey() {
   if (!currentKey) return;
   panicSettings.shift = currentModifiers.shift;
-  panicSettings.ctrl = currentModifiers.ctrl;
-  panicSettings.alt = currentModifiers.alt;
-  panicSettings.key = currentKey;
+  panicSettings.ctrl  = currentModifiers.ctrl;
+  panicSettings.alt   = currentModifiers.alt;
+  panicSettings.key   = currentKey;
   const mods = [];
-  if (panicSettings.ctrl) mods.push('Ctrl');
+  if (panicSettings.ctrl)  mods.push('Ctrl');
   if (panicSettings.shift) mods.push('Shift');
-  if (panicSettings.alt) mods.push('Alt');
-  let display = mods.length > 0 ? mods.join('+') + '+' : '';
-  display += currentKey.toUpperCase();
-  panicSettings.displayString = display;
-  saveAppSettings();
-  updateKeyDisplay();
+  if (panicSettings.alt)   mods.push('Alt');
+  panicSettings.displayString = (mods.length ? mods.join('+')+'+' : '') + currentKey.toUpperCase();
+  saveAppData(); updateKeyDisplay();
 }
-
 function stopKeyRecording() {
   if (!isRecordingKey) return;
   if (currentKey) savePanicKey();
@@ -823,122 +752,91 @@ function stopKeyRecording() {
   updateKeyDisplay();
 }
 
-function keydownHandler(e) {
+document.addEventListener('keydown', (e) => {
+  // Test shortcuts (access screen only) handled at top — skip here
   if (!accessGranted) return;
   if (!isRecordingKey) {
-    // Check panic key
-    const kMatch = e.key && (e.key.toLowerCase() === (panicSettings.key || '').toLowerCase() || e.key === panicSettings.key);
-    if (kMatch && e.shiftKey === panicSettings.shift && e.ctrlKey === panicSettings.ctrl && e.altKey === panicSettings.alt) {
-      triggerPanic();
-    }
+    const match = e.key && e.key.toLowerCase() === (panicSettings.key||'').toLowerCase()
+      && e.shiftKey === panicSettings.shift && e.ctrlKey === panicSettings.ctrl && e.altKey === panicSettings.alt;
+    if (match) triggerPanic();
     return;
   }
-
-  // Recording mode
-  if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Meta') {
-    // Just track modifier state, don't prevent default
-    if (e.key === 'Shift') currentModifiers.shift = true;
-    if (e.key === 'Control') currentModifiers.ctrl = true;
-    if (e.key === 'Alt') currentModifiers.alt = true;
-    updateKeyDisplay();
-    return;
+  if (['Shift','Control','Alt','Meta'].includes(e.key)) {
+    if (e.key==='Shift')   currentModifiers.shift=true;
+    if (e.key==='Control') currentModifiers.ctrl=true;
+    if (e.key==='Alt')     currentModifiers.alt=true;
+    updateKeyDisplay(); return;
   }
-
-  e.preventDefault();
-  e.stopPropagation();
+  e.preventDefault(); e.stopPropagation();
   if (releaseTimeout) clearTimeout(releaseTimeout);
-
   let key = e.key;
-  if (key === ' ') key = 'Space';
-  if (key === 'Escape') key = 'Esc';
-  if (key === 'ArrowUp') key = '↑';
-  if (key === 'ArrowDown') key = '↓';
-  if (key === 'ArrowLeft') key = '←';
-  if (key === 'ArrowRight') key = '→';
-  if (key === 'Tab') key = 'Tab';
-  if (key === 'Enter') key = 'Enter';
-  if (key === 'Backspace') key = 'Backspace';
-  if (key === 'Delete') key = 'Delete';
+  const remap = {' ':'Space','Escape':'Esc','ArrowUp':'↑','ArrowDown':'↓','ArrowLeft':'←','ArrowRight':'→'};
+  key = remap[key] || key;
+  currentKey = key; updateKeyDisplay();
+});
 
-  currentKey = key;
-  updateKeyDisplay();
-
-  // If no modifiers held, auto-save immediately on keyup
-}
-
-function keyupHandler(e) {
+document.addEventListener('keyup', (e) => {
   if (!isRecordingKey) return;
-
-  if (e.key === 'Shift') { currentModifiers.shift = false; updateKeyDisplay(); }
-  if (e.key === 'Control') { currentModifiers.ctrl = false; updateKeyDisplay(); }
-  if (e.key === 'Alt') { currentModifiers.alt = false; updateKeyDisplay(); }
-
-  // If a real key was pressed, stop recording
-  if (currentKey && e.key !== 'Shift' && e.key !== 'Control' && e.key !== 'Alt' && e.key !== 'Meta') {
-    stopKeyRecording();
-    return;
-  }
-
-  // If modifier released and we have a key, save
+  if (e.key==='Shift')   { currentModifiers.shift=false; updateKeyDisplay(); }
+  if (e.key==='Control') { currentModifiers.ctrl=false;  updateKeyDisplay(); }
+  if (e.key==='Alt')     { currentModifiers.alt=false;   updateKeyDisplay(); }
+  if (currentKey && !['Shift','Control','Alt','Meta'].includes(e.key)) { stopKeyRecording(); return; }
   if (currentKey && !currentModifiers.shift && !currentModifiers.ctrl && !currentModifiers.alt) {
     if (releaseTimeout) clearTimeout(releaseTimeout);
-    releaseTimeout = setTimeout(() => stopKeyRecording(), 300);
+    releaseTimeout = setTimeout(stopKeyRecording, 300);
   }
-}
+});
 
-document.addEventListener('keydown', keydownHandler);
-document.addEventListener('keyup', keyupHandler);
-
-// ==================== TAB SWITCHING ====================
+// ══════════════════════════════════════════════════════
+//  TAB SWITCHING
+// ══════════════════════════════════════════════════════
 function switchTab(tab, btn) {
-  document.querySelectorAll('.icon-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.icon-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
   document.getElementById(`${tab}Tab`).classList.add('active');
-  if (tab === 'library') renderBookmarksGrid();
-  if (tab === 'settings') renderSettingsUI();
-  if (tab === 'explore') setTimeout(() => setupLinkInterceptor(), 300);
+  if (tab==='library')  renderBookmarksGrid();
+  if (tab==='settings') renderSettingsUI();
+  if (tab==='explore')  setTimeout(setupLinkInterceptor, 300);
 }
 
-// ==================== UTILS ====================
+// ══════════════════════════════════════════════════════
+//  UTILS
+// ══════════════════════════════════════════════════════
 function showToast(msg) {
-  const toast = document.createElement('div');
-  toast.textContent = msg;
-  toast.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:12px 24px;border-radius:40px;z-index:9999;border:1px solid #2c2c2c;font-family:DM Sans,sans-serif;';
-  document.body.appendChild(toast);
-  setTimeout(() => toast.remove(), 2000);
+  const t = document.createElement('div');
+  t.textContent = msg;
+  t.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:12px 24px;border-radius:40px;z-index:9999;border:1px solid #2c2c2c;font-family:inherit;font-size:14px;';
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(), 2000);
 }
-
-function escapeHtml(str) {
+function esc(str) {
   if (!str) return '';
-  return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  return String(str).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 }
 
-// ==================== GLOBALS FOR HTML ONCLICK ====================
-window.switchTab = switchTab;
-window.closeBookmarkModal = closeBookmarkModal;
+// ══════════════════════════════════════════════════════
+//  EXPOSE GLOBALS
+// ══════════════════════════════════════════════════════
+window.handleGoogleCredential   = handleGoogleCredential;
+window.switchTab                = switchTab;
+window.closeBookmarkModal       = closeBookmarkModal;
 window.saveBookmarkWithValidation = saveBookmarkWithValidation;
-window.saveTabSettings = saveTabSettings;
-window.onFaviconChange = onFaviconChange;
-window.savePanicUrl = savePanicUrl;
-window.startKeyRecording = startKeyRecording;
-window.triggerPanic = triggerPanic;
-window.launchCurrentTabInBlank = launchCurrentTabInBlank;
-window.addWhitelistEntry = addWhitelistEntry;
-window.removeWhitelistEntry = removeWhitelistEntry;
-window.signOut = signOut;
-window.handleGoogleCredential = handleGoogleCredential;
+window.openBookmarkModal        = openBookmarkModal;
+window.saveTabSettings          = saveTabSettings;
+window.onFaviconChange          = onFaviconChange;
+window.savePanicUrl             = savePanicUrl;
+window.startKeyRecording        = startKeyRecording;
+window.triggerPanic             = triggerPanic;
+window.launchCurrentTabInBlank  = launchCurrentTabInBlank;
+window.addWhitelistEntry        = addWhitelistEntry;
+window.removeWhitelistEntry     = removeWhitelistEntry;
+window.signOut                  = signOut;
 
-// ==================== BOOT ====================
-(function boot() {
-  if (checkExistingSession()) {
-    const screen = document.getElementById('accessScreen');
-    if (screen) screen.remove();
-    document.getElementById('mainLayout').style.display = 'flex';
-    initializeApp();
-  }
-  // Otherwise Google GSI auto-prompt will trigger handleGoogleCredential
-})();
+// ══════════════════════════════════════════════════════
+//  BOOT
+// ══════════════════════════════════════════════════════
+checkStoredToken(); // tries stored token first; if none, Google GSI auto-prompt fires
 </script>
 </body>
 </html>

@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: clysmn
+    runtime: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: TOKEN_SECRET
+        generateValue: true
