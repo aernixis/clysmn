@@ -202,7 +202,7 @@
     <div class="tab-content" id="exploreTab">
       <div class="explore-wrapper">
         <iframe id="swisscowsIframe" class="explore-iframe" src="https://swisscows.com/en" sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals allow-top-navigation-by-user-activation" referrerpolicy="no-referrer"></iframe>
-        <div class="click-hint">⚡ click any link → opens in about:blank tab</div>
+        <div class="click-hint">click any link → opens in about:blank tab</div>
       </div>
     </div>
     <div class="tab-content" id="libraryTab"><div class="library-wrapper"><div class="library-header"><h2>Library</h2><p>Your saved bookmarks</p></div><div class="bookmarks-grid" id="bookmarksGrid"></div></div></div>
@@ -212,24 +212,34 @@
 <div class="modal-overlay" id="bookmarkModal"><div class="modal"><h3 id="modalTitle">Add Bookmark</h3><input type="text" class="modal-input" id="bookmarkName" placeholder="Name" autocomplete="off" /><input type="text" class="modal-input" id="bookmarkUrl" placeholder="URL" autocomplete="off" /><div id="urlError" class="error-message" style="display:none;">Please enter a valid URL</div><div class="modal-buttons"><button class="modal-btn secondary" onclick="closeBookmarkModal()">Cancel</button><button class="modal-btn primary" onclick="saveBookmarkWithValidation()">Save</button></div></div></div>
 
 <script>
-  // ==================== ADMIN & AUTH ====================
+  // ==================== AUTOMATIC AUTHENTICATION ====================
+  // No email prompt - automatically grant access with default whitelist
+  let currentUser = "auto_user";
+  let isAdmin = true; // Auto-grant admin for full access
+  let whitelist = [];
+  
+  // Admin emails list for reference
   const ADMIN_EMAILS = ['fhuang@princetonk12.org', 'aernatas@gmail.com', 'aernixis@gmail.com'];
-  let currentUser = null, isAdmin = false;
-  let whitelist = [...ADMIN_EMAILS];
-  try { const saved = localStorage.getItem('whitelist'); if (saved) { const parsed = JSON.parse(saved); whitelist = [...new Set([...ADMIN_EMAILS, ...parsed])]; } } catch(e) {}
-
-  function checkAuth() {
-    const savedEmail = localStorage.getItem('authenticatedEmail');
-    if (savedEmail && whitelist.includes(savedEmail.toLowerCase())) { currentUser = savedEmail.toLowerCase(); isAdmin = ADMIN_EMAILS.includes(currentUser); initializeApp(); } 
-    else showAuthPrompt();
+  
+  // Load saved whitelist from localStorage if exists
+  try {
+    const saved = localStorage.getItem('whitelist');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      whitelist = [...new Set([...ADMIN_EMAILS, ...parsed])];
+    } else {
+      whitelist = [...ADMIN_EMAILS];
+    }
+  } catch(e) {
+    whitelist = [...ADMIN_EMAILS];
   }
-  function showAuthPrompt() {
-    const email = prompt('Please enter your email to access this site:');
-    if (email && whitelist.includes(email.toLowerCase())) { currentUser = email.toLowerCase(); isAdmin = ADMIN_EMAILS.includes(currentUser); localStorage.setItem('authenticatedEmail', currentUser); initializeApp(); } 
-    else if (email) window.location.href = 'https://login.classlink.com/my/pps';
-    else window.location.href = 'https://login.classlink.com/my/pps';
+  
+  // Auto-initialize without any prompt
+  function autoAuth() {
+    // No prompt, just initialize
+    initializeApp();
   }
-
+  
   const SEARCH_URL = "https://swisscows.com/en/web?query={query}";
   const faviconMap = { canvas: "https://canvas.instructure.com/favicon.ico", docs: "https://www.gstatic.com/images/branding/product/1x/docs_2020q4_32dp.png", classroom: "https://upload.wikimedia.org/wikipedia/commons/5/59/Google_Classroom_Logo.png", classlink: "https://play-lh.googleusercontent.com/ujsa1M8GdT-fo-GfPazpUwgPXVWEOWKUgKZk-SdnUhmcL3opS24MiHe6ypEgqxGpllw", outlook: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cc/Microsoft_Outlook_Icon_%282025%E2%80%93present%29.svg/1280px-Microsoft_Outlook_Icon_%282025%E2%80%93present%29.svg.png" };
   const siteNameMap = { canvas: "Canvas", docs: "Google Docs", classroom: "Google Classroom", classlink: "ClassLink", outlook: "Outlook" };
@@ -238,9 +248,29 @@
   let bookmarks = [];
   let isRecordingKey = false, currentModifiers = { shift: false, ctrl: false, alt: false }, currentKey = null, releaseTimeout = null;
 
-  function loadSettings() { try { const savedTab = localStorage.getItem('tabSettings'); if (savedTab) tabSettings = JSON.parse(savedTab); const savedPanic = localStorage.getItem('panicSettings'); if (savedPanic) panicSettings = JSON.parse(savedPanic); const savedBookmarks = localStorage.getItem('bookmarks'); if (savedBookmarks) bookmarks = JSON.parse(savedBookmarks); } catch(e) {} }
-  function saveSettings() { localStorage.setItem('tabSettings', JSON.stringify(tabSettings)); localStorage.setItem('panicSettings', JSON.stringify(panicSettings)); localStorage.setItem('bookmarks', JSON.stringify(bookmarks)); localStorage.setItem('whitelist', JSON.stringify(whitelist.filter(e => !ADMIN_EMAILS.includes(e)))); }
-  function isValidUrl(url) { if (!url) return false; const trimmed = url.trim(); if (/^https?:\/\//i.test(trimmed)) return true; if (trimmed.includes('.') && !trimmed.includes(' ') && trimmed.length > 3) return true; return false; }
+  function loadSettings() { 
+    try { 
+      const savedTab = localStorage.getItem('tabSettings'); 
+      if (savedTab) tabSettings = JSON.parse(savedTab); 
+      const savedPanic = localStorage.getItem('panicSettings'); 
+      if (savedPanic) panicSettings = JSON.parse(savedPanic); 
+      const savedBookmarks = localStorage.getItem('bookmarks'); 
+      if (savedBookmarks) bookmarks = JSON.parse(savedBookmarks); 
+    } catch(e) {} 
+  }
+  function saveSettings() { 
+    localStorage.setItem('tabSettings', JSON.stringify(tabSettings)); 
+    localStorage.setItem('panicSettings', JSON.stringify(panicSettings)); 
+    localStorage.setItem('bookmarks', JSON.stringify(bookmarks)); 
+    localStorage.setItem('whitelist', JSON.stringify(whitelist.filter(e => !ADMIN_EMAILS.includes(e)))); 
+  }
+  function isValidUrl(url) { 
+    if (!url) return false; 
+    const trimmed = url.trim(); 
+    if (/^https?:\/\//i.test(trimmed)) return true; 
+    if (trimmed.includes('.') && !trimmed.includes(' ') && trimmed.length > 3) return true; 
+    return false; 
+  }
 
   // ========== CORE: about:blank launcher ==========
   function launchInAboutBlank(url) {
@@ -380,19 +410,49 @@
         <h2>Panic Button</h2>
         <div class="setting-field"><label>Panic Key:</label><button id="recordKeyBtn" class="key-record-btn" onclick="startKeyRecording()">${panicSettings.displayString || 'Click to record key'}</button></div>
         <div class="setting-field"><label>Redirect URL:</label><input type="text" id="panicUrl" value="${panicSettings.url}" onblur="savePanicUrl()" onkeypress="if(event.key==='Enter'){this.blur();}" /></div>
+      </div>
+      <div class="settings-section">
+        <h2>Whitelist Management</h2>
+        <div class="setting-field"><label>Add Email to Whitelist:</label><input type="email" id="newWhitelistEmail" placeholder="email@example.com" onkeypress="if(event.key==='Enter'){addToWhitelist();}" /></div>
+        <div class="setting-field"><label>Current Whitelisted Emails:</label><div id="whitelistContainer"></div></div>
       </div>`;
-    if (isAdmin) {
-      html += `<div class="settings-section"><h2>Whitelist Management</h2><div class="setting-field"><label>Add Email to Whitelist:</label><input type="email" id="newWhitelistEmail" placeholder="email@example.com" onkeypress="if(event.key==='Enter'){addToWhitelist();}" /></div><div class="setting-field"><label>Current Whitelisted Emails:</label><div id="whitelistContainer"></div></div></div>`;
-    }
     container.innerHTML = html;
-    if (isAdmin) renderWhitelist();
+    renderWhitelist();
   }
   
   function saveFaviconSettings() { const selected = document.getElementById('faviconSelect').value; tabSettings.favicon = selected; saveSettings(); updatePreview(); showToast('Tab settings saved'); }
   function savePanicUrl() { const newUrl = document.getElementById('panicUrl').value; if (newUrl) { panicSettings.url = newUrl; saveSettings(); showToast('Panic URL saved'); } }
-  function renderWhitelist() { const container = document.getElementById('whitelistContainer'); if (!container) return; const allEmails = [...ADMIN_EMAILS, ...whitelist.filter(e => !ADMIN_EMAILS.includes(e))]; container.innerHTML = allEmails.map(email => `<div class="whitelist-item"><span>${email} ${ADMIN_EMAILS.includes(email) ? '<span style="color:#4caf50;">(Admin)</span>' : ''}</span>${!ADMIN_EMAILS.includes(email) ? `<button class="remove-whitelist" onclick="removeFromWhitelist('${email}')">Remove</button>` : ''}</div>`).join(''); }
-  function addToWhitelist() { const input = document.getElementById('newWhitelistEmail'); const email = input.value.trim().toLowerCase(); if (email && !whitelist.includes(email) && !ADMIN_EMAILS.includes(email)) { whitelist.push(email); saveSettings(); renderWhitelist(); showToast('Email added to whitelist'); input.value = ''; } else if (ADMIN_EMAILS.includes(email)) showToast('This email is already an admin'); else if (whitelist.includes(email)) showToast('Email already in whitelist'); }
-  function removeFromWhitelist(email) { if (ADMIN_EMAILS.includes(email)) { showToast('Cannot remove admin email'); return; } whitelist = whitelist.filter(e => e !== email); saveSettings(); renderWhitelist(); showToast('Email removed from whitelist'); }
+  function renderWhitelist() { 
+    const container = document.getElementById('whitelistContainer'); 
+    if (!container) return; 
+    const allEmails = [...ADMIN_EMAILS, ...whitelist.filter(e => !ADMIN_EMAILS.includes(e))]; 
+    container.innerHTML = allEmails.map(email => `<div class="whitelist-item"><span>${email} ${ADMIN_EMAILS.includes(email) ? '<span style="color:#4caf50;">(Admin)</span>' : ''}</span>${!ADMIN_EMAILS.includes(email) ? `<button class="remove-whitelist" onclick="removeFromWhitelist('${email}')">Remove</button>` : ''}</div>`).join(''); 
+  }
+  function addToWhitelist() { 
+    const input = document.getElementById('newWhitelistEmail'); 
+    const email = input.value.trim().toLowerCase(); 
+    if (email && !whitelist.includes(email) && !ADMIN_EMAILS.includes(email)) { 
+      whitelist.push(email); 
+      saveSettings(); 
+      renderWhitelist(); 
+      showToast('Email added to whitelist'); 
+      input.value = ''; 
+    } else if (ADMIN_EMAILS.includes(email)) { 
+      showToast('This email is already an admin'); 
+    } else if (whitelist.includes(email)) { 
+      showToast('Email already in whitelist'); 
+    } 
+  }
+  function removeFromWhitelist(email) { 
+    if (ADMIN_EMAILS.includes(email)) { 
+      showToast('Cannot remove admin email'); 
+      return; 
+    } 
+    whitelist = whitelist.filter(e => e !== email); 
+    saveSettings(); 
+    renderWhitelist(); 
+    showToast('Email removed from whitelist'); 
+  }
   function updatePreview() { const favDisplay = document.getElementById('faviconDisplay'); const nameDisplay = document.getElementById('siteNameDisplay'); if (favDisplay) favDisplay.innerHTML = `<img src="${faviconMap[tabSettings.favicon]}" alt="favicon" style="width:32px;height:32px;">`; if (nameDisplay) nameDisplay.innerText = siteNameMap[tabSettings.favicon]; }
   function openBookmarkModal(editIdx = null) { window.editIdx = editIdx; document.getElementById('modalTitle').innerText = editIdx !== null ? 'Edit Bookmark' : 'Add Bookmark'; if (editIdx !== null) { document.getElementById('bookmarkName').value = bookmarks[editIdx].name; document.getElementById('bookmarkUrl').value = bookmarks[editIdx].url; } else { document.getElementById('bookmarkName').value = ''; document.getElementById('bookmarkUrl').value = ''; } document.getElementById('bookmarkModal').classList.add('active'); }
   function closeBookmarkModal() { document.getElementById('bookmarkModal').classList.remove('active'); }
@@ -403,7 +463,9 @@
   function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;'); }
   function initializeApp() { loadSettings(); renderSettingsUI(); renderBookmarksGrid(); setupSwisscowsLinkInterceptor(); document.getElementById('mainLayout').style.display = 'flex'; }
   
-  checkAuth();
+  // Auto-start without any email prompt
+  autoAuth();
+  
   window.switchTab = switchTab; window.closeBookmarkModal = closeBookmarkModal; window.saveBookmarkWithValidation = saveBookmarkWithValidation; window.saveFaviconSettings = saveFaviconSettings; window.savePanicUrl = savePanicUrl; window.addToWhitelist = addToWhitelist; window.removeFromWhitelist = removeFromWhitelist; window.startKeyRecording = startKeyRecording; window.triggerPanic = triggerPanic; window.launchCurrentTabInBlank = launchCurrentTabInBlank;
 </script>
 </body>
