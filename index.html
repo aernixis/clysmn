@@ -424,6 +424,7 @@
   }
   
   // ==================== APP FUNCTIONALITY ====================
+  const LAUNCH_URL = "https://aernixis.github.io/clysmn/";
   const SEARCH_URL = "https://swisscows.com/en/web?query={query}";
   const faviconMap = { canvas: "https://canvas.instructure.com/favicon.ico", docs: "https://www.gstatic.com/images/branding/product/1x/docs_2020q4_32dp.png", classroom: "https://upload.wikimedia.org/wikipedia/commons/5/59/Google_Classroom_Logo.png", classlink: "https://play-lh.googleusercontent.com/ujsa1M8GdT-fo-GfPazpUwgPXVWEOWKUgKZk-SdnUhmcL3opS24MiHe6ypEgqxGpllw", outlook: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cc/Microsoft_Outlook_Icon_%282025%E2%80%93present%29.svg/1280px-Microsoft_Outlook_Icon_%282025%E2%80%93present%29.svg.png" };
   const siteNameMap = { canvas: "Canvas", docs: "Google Docs", classroom: "Google Classroom", classlink: "ClassLink", outlook: "Outlook" };
@@ -469,14 +470,9 @@
   }
 
   function launchCurrentTabInBlank() {
-    const activeTabId = document.querySelector('.tab-content.active')?.id;
-    let targetUrl = '';
-    if (activeTabId === 'homeTab') { const homeIframe = document.getElementById('embed-frame'); if (homeIframe && homeIframe.src) targetUrl = homeIframe.src; }
-    else if (activeTabId === 'exploreTab') { const exploreIframe = document.getElementById('swisscowsIframe'); if (exploreIframe && exploreIframe.src) targetUrl = exploreIframe.src; }
-    else { targetUrl = 'https://swisscows.com/en'; }
-    if (targetUrl) launchInAboutBlank(targetUrl);
-    else launchInAboutBlank('https://swisscows.com/en');
-    showToast('Launched in about:blank');
+    // Launch the specified URL instead of the current tab content
+    launchInAboutBlank(LAUNCH_URL);
+    showToast('Launched clysmn in about:blank');
   }
 
   function setupSwisscowsLinkInterceptor() {
@@ -538,8 +534,8 @@
     
     let html = `
       <div class="settings-section">
-        <h2>Launch Current Tab</h2>
-        <div class="setting-field"><button class="launch-blank-btn" onclick="launchCurrentTabInBlank()">Open Current Tab in about:blank</button></div>
+        <h2>Launch clysmn</h2>
+        <div class="setting-field"><button class="launch-blank-btn" onclick="launchCurrentTabInBlank()">Open clysmn in about:blank</button></div>
       </div>
       <div class="settings-section">
         <h2>About:Blank Tab Settings</h2>
